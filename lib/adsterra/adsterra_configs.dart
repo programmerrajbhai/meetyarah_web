@@ -8,9 +8,9 @@ class AdsterraConfigs {
   static const String srcSocialBar =
       "https://pl25522730.effectivegatecpm.com/dd/4f/78/dd4f7878c3a97f6f9e08bdf8911ad44b.js";
   static const String monetagHomeLink =
-      "https://www.effectivegatecpm.com/n90473c2?key=8d080fc227ce9b5ddb7bd690437b6d2c";
+      "https://otieu.com/4/10229034";
   static const String monetagPlayerLink =
-      "https://www.effectivegatecpm.com/n90473c2?key=8d080fc227ce9b5ddb7bd690437b6d2c";
+      "https://otieu.com/4/10228985";
 
   //
   // // 👉 লিংক ১: মেইন লিস্ট বা রিলস স্ক্রিনের জন্য
@@ -25,8 +25,11 @@ class AdsterraConfigs {
   // ============================================================
   // ⚠️ ৩. লিগ্যাসি/ব্যাকআপ লিংক (Adsterra Smart Link)
   // ============================================================
+
   static const String smartLinkUrl = "https://otieu.com/4/10229030";
   static const String popunderUrl = smartLinkUrl;
+
+
   static String get html300x250 =>
       """
     <script type="text/javascript">
