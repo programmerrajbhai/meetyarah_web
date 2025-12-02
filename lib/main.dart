@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 // ✅ ১. প্যাকেজ ইমপোর্ট (অবশ্যই থাকতে হবে)
 import 'package:app_links/app_links.dart';
 
 import 'package:meetyarah/ui/home/models/get_post_model.dart';
-import 'package:meetyarah/ui/home/screens/baseScreens.dart';
+
 import 'package:meetyarah/ui/login_reg_screens/controllers/auth_controller.dart';
-import 'package:meetyarah/ui/login_reg_screens/screens/login_screen.dart';
 import 'package:meetyarah/ui/reels/screens/reel_screens.dart';
-import 'package:meetyarah/ui/splashScreens/screens/splash_screens.dart';
 import 'package:meetyarah/ui/view_post/screens/post_details.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // AuthService ইনিশিয়ালাইজ করা
+
+  // AuthService ইনিশিয়ালাইজ
   await Get.putAsync(() => AuthService().init());
+
+  // 🔥 Stripe সেটআপ (নিরাপদ উপায়ে)
+  try {
+    Stripe.publishableKey = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    await Stripe.instance.applySettings();
+  } catch (e) {
+    print("⚠️ Stripe Initialization Error: $e");
+    // এরর হলেও অ্যাপ চালু থাকবে
+  }
 
   runApp(const MyApp());
 }

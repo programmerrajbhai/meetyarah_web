@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 // আপনার প্রজেক্ট পাথ ঠিক রাখুন
 import '../../../adsterra/adsterra_configs.dart';
 import '../ads/AdWebViewScreen.dart';
+import '../profile_screens/screens/view_profile_screens.dart';
 
 class VideoDataModel {
   final String url;
@@ -34,87 +35,85 @@ class VideoDataModel {
 
 
 
+// ==========================================
+// 2. DATA GENERATOR (Real Girl Photos)
+// ==========================================
 class VideoDataHelper {
 
-  // 🔥 Hot & Secret Channel Names
+  // 🔥 রিয়েল দেশি ও বিদেশি মেয়েদের ছবির ডাইরেক্ট লিংক
+  static final List<String> _realProfileImages = [
+    // --- Desi / Indian / Bengali Look ---
+    'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1587009/pexels-photo-1587009.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/2104252/pexels-photo-2104252.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/2613260/pexels-photo-2613260.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/2773977/pexels-photo-2773977.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/3225517/pexels-photo-3225517.jpeg?auto=compress&cs=tinysrgb&w=200',
+
+    // --- Bideshi / Western Look ---
+    'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/3756679/pexels-photo-3756679.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1024311/pexels-photo-1024311.jpeg?auto=compress&cs=tinysrgb&w=200',
+    'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200'
+  ];
+
   static final List<String> _girlNames = [
-    "Naughty Anika", "Desi Bhabi Vlogs", "Secret Diary", "Dream Girl Rimi",
-    "Hot Bella Official", "Misty Night", "Sofia X", "Cute Puja",
-    "Viral Leaks", "Midnight Lover", "Sunny Fan Club", "Sweet Taniya",
-    "Boudi Diaries", "Romance Hub", "Private Moments", "Lisa Uncut",
-    "Zara Private", "Desi Masala", "Night Angel", "Pinky Vlogs",
-    "Bedroom Queen", "Late Night Show", "Hot Model Riya", "Desi Dhamaka",
-    "Village Viral", "College Crush", "My Private Life", "Exclusive Clips"
+    "Naughty Anika", "Desi Bhabi Vlogs", "Sexy Sophia", "Dream Girl Rimi",
+    "Hot Bella", "Misty Night", "Sofia X", "Cute Puja",
+    "Viral Queen", "Midnight Lover", "Sunny Fan Club", "Sweet Taniya",
+    "Boudi Diaries", "Romance Hub", "Private Moments"
   ];
 
-  // 🔥 Title Part 1: The Scene (Location / Person)
   static final List<String> _titleStart = [
-    "OMG! My Ex", "Late Night", "Desi Bhabi", "College Hostel", "Bathroom Door",
+    "OMG! My Ex", "Late Night", "Desi Bhabi", "College Girl", "Bathroom",
     "Bedroom Secret", "First Night", "Private Room", "Hidden Cam", "Hot Yoga",
-    "Naughty", "Midnight", "Shower Time", "Hotel Room 302", "My Crush",
-    "Dirty Truth", "Open Door", "Only Fans", "Step Sister", "Gym Workout",
-    "My Landlord", "Neighbor Aunty", "Cute Student", "Office Cabin",
-    "Village Girl", "While Husband Sleeping", "Changing Room", "Massage Parlor",
-    "Wild Party", "After School", "Tuition Teacher", "Nurse Roleplay",
-    "Lonely Housewife", "Swimming Pool", "Car Romance", "Lift Prank",
-    "Kitchen Romance", "Rainy Day", "Winter Night", "Summer Heat"
+    "Naughty", "Midnight", "Shower Time", "Hotel Room", "My Crush"
   ];
 
-  // 🔥 Title Part 2: The Action (What Happened - NO DANCE)
   static final List<String> _titleMiddle = [
     "Forgot Camera Was ON 📸", "Leaked Video Viral", "Romance with BF",
     "Changing Clothes 👗", "Towel Slipped 😱", "Video Call Record",
     "Private Moment Caught", "Oil Massage Prank", "Uncut Scene", "Sleeping Alone",
-    "Live Stream Mistake", "Sending Nudes?", "Kissing Prank", "Doing It Publicly",
-    "Bathtub Fun", "Saree Wardrobe Malfunction", "Shows Everything",
-    "Caught by Mom 😱", "Forgot to Lock Door", "Playing with Myself",
-    "Trying New Lingerie", "Dirty Talk Audio", "Zoom Meeting Fail",
-    "Exposed by BF", "Cleaning Room", "Doing Yoga Steps",
-    "Removing Everything", "Transparent Dress", "Wet Saree Look",
-    "Making Out in Public", "Secretly Recorded", "Asking for It",
-    "Bed Sheet Challenge", "Morning Routine", "Late Night Study"
+    "Live Stream Mistake", "Sending Nudes?", "Kissing Prank"
   ];
 
-  // 🔥 Title Part 3: The Hook (Clickbait Suffix)
   static final List<String> _titleEnd = [
     "🔥 | Too Hot", "❌ | Don't Tell Anyone", "🔞 | 18+ Only", "😱 | Viral Clip",
     "🚫 | Watch Before Delete", "💦 | Satisfaction", "😈 | Very Naughty", "🔒 | Leaked",
-    "😍 | Must Watch", "📹 | Full HD", "🍌 | Wild", "🔞 | Headphones Must",
-    "🔥 | Agun", "💋 | Romantic", "🥵 | Sweaty", "🤯 | Mind Blowing",
-    "🤫 | Secret", "🤐 | No Sound", "👀 | Zoom In", "👄 | ASMR",
-    "💣 | Boom", "🙈 | Shameful", "🔥 | Trending #1"
+    "😍 | Must Watch"
   ];
 
   static List<VideoDataModel> generateVideos(int count) {
     var random = Random();
-
     return List.generate(count, (index) {
       int id = 64000 + index;
 
-      // 🧠 Smart Logic: 3 Parts Mix
       String dynamicTitle = "${_titleStart[random.nextInt(_titleStart.length)]} "
           "${_titleMiddle[random.nextInt(_titleMiddle.length)]} "
           "${_titleEnd[random.nextInt(_titleEnd.length)]}";
-
       String dynamicChannel = _girlNames[random.nextInt(_girlNames.length)];
 
       return VideoDataModel(
         url: 'https://ser3.masahub.cc/myfiless/id/$id.mp4',
         title: dynamicTitle,
         channelName: dynamicChannel,
-        views: "${(random.nextDouble() * 8 + 0.5).toStringAsFixed(1)}M", // 0.5M - 8.5M
-        likes: "${random.nextInt(80) + 20}K", // 20K - 99K
+        views: "${(random.nextDouble() * 8 + 0.5).toStringAsFixed(1)}M",
+        likes: "${random.nextInt(80) + 20}K",
         comments: "${random.nextInt(2000) + 500}",
         timeAgo: "${random.nextInt(12) + 1}h",
         duration: "${random.nextInt(15) + 4}:${random.nextInt(50) + 10}",
-        profileImage: "https://i.pravatar.cc/150?u=$id",
+        // 🔥 এখান থেকে র‍্যান্ডম রিয়েল ফটো পিক করবে
+        profileImage: _realProfileImages[random.nextInt(_realProfileImages.length)],
         subscribers: "${(random.nextDouble() * 5 + 0.5).toStringAsFixed(1)}M",
       );
     });
   }
 }
-
-
 
 // ==========================================
 // 3. MAIN REEL SCREEN (With Shimmer Effect)
@@ -470,28 +469,3 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with AutomaticKee
   @override bool get wantKeepAlive => true;
 }
 
-class ProfileViewScreen extends StatelessWidget {
-  final VideoDataModel videoData;
-  const ProfileViewScreen({super.key, required this.videoData});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<VideoDataModel> profileVideos = VideoDataHelper.generateVideos(15);
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(title: Text(videoData.channelName, style: const TextStyle(color: Colors.black)), backgroundColor: Colors.white, elevation: 1, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Get.back())),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: 200, child: Stack(alignment: Alignment.bottomCenter, children: [Container(height: 200, decoration: const BoxDecoration(image: DecorationImage(image: NetworkImage("https://picsum.photos/800/300"), fit: BoxFit.cover))), Positioned(bottom: 0, child: CircleAvatar(radius: 60, backgroundImage: NetworkImage(videoData.profileImage)))])),
-            const SizedBox(height: 10),
-            Text(videoData.channelName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            Text("${videoData.subscribers} Subscribers", style: TextStyle(color: Colors.grey[600])),
-            const SizedBox(height: 15),
-            ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: profileVideos.length, itemBuilder: (context, index) => FacebookVideoCard(videoData: profileVideos[index], allVideosList: [])),
-          ],
-        ),
-      ),
-    );
-  }
-}

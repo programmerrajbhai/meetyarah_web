@@ -1,6 +1,8 @@
 package com.meeyarah.meetyarah;
 
-import io.flutter.embedding.android.FlutterActivity;
+// এই লাইনটি খুবই গুরুত্বপূর্ণ
+import io.flutter.embedding.android.FlutterFragmentActivity;
 
-public class MainActivity extends FlutterActivity {
+public class MainActivity extends FlutterFragmentActivity {
+    // এখানে আর কিছু লেখার দরকার নেই
 }

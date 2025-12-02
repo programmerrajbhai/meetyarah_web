@@ -51,6 +51,7 @@ dependencies:
   android_intent_plus: ^5.0.0
   video_thumbnail: ^0.5.3
   faker: ^2.2.0
+  flutter_stripe:
 
 dev_dependencies:
   flutter_test:
