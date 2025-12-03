@@ -29,26 +29,38 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
   bool _isLoading = true;
   bool _showRecommendations = false;
 
-  // লজিক ভেরিয়েবল
+  // Logic Variables
   Timer? _progressTimer;
   bool _hasShownAt30s = false;
   double _currentVideoDuration = 0.0;
 
+  // Random Suggestions List
+  late List<String> _shuffledSuggestions;
+
   @override
   void initState() {
     super.initState();
-    // ১. ওরিয়েন্টেশন ফিক্সড রাখা
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    // ২. ফুল স্ক্রিন মোড (স্ট্যাটাস বার হাইড করে ইমারসিভ মোড)
+    // 1. Orientation & UI Setup
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
+    // 2. Prepare Random Suggestions
+    _prepareSuggestions();
+
+    // 3. Load Main Video
     _initializeWebView(widget.initialVideoUrl);
   }
 
+  void _prepareSuggestions() {
+    // বর্তমান ভিডিও বাদ দিয়ে বাকিগুলো নেওয়া
+    var tempList = widget.allVideos.where((url) => url != widget.initialVideoUrl).toList();
+    // র‍্যান্ডমলি শাফেল করা (যাতে প্রতিবার আলাদা ভিডিও আসে)
+    tempList.shuffle();
+    // টপ ১০টা বা ২০টা নেওয়া (পারফরমেন্সের জন্য)
+    _shuffledSuggestions = tempList.take(15).toList();
+  }
+
   void _initializeWebView(String url) {
-    // [PERFORMANCE FIX 1]: সঠিক কনফিগারেশন প্যারামস ব্যবহার
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is AndroidWebViewPlatform) {
       params = AndroidWebViewControllerCreationParams();
@@ -60,7 +72,7 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
 
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.black) // ফ্ল্যাশ এড়াতে কালো ব্যাকগ্রাউন্ড
+      ..setBackgroundColor(Colors.black)
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) {
@@ -72,9 +84,8 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
         ),
       );
 
-    // [PERFORMANCE FIX 2]: Android এর জন্য হার্ডওয়্যার সেটিংস অপ্টিমাইজেশন
     if (controller.platform is AndroidWebViewController) {
-      AndroidWebViewController.enableDebugging(false); // ডিবাগিং বন্ধ (ফাস্ট হবে)
+      AndroidWebViewController.enableDebugging(false);
       (controller.platform as AndroidWebViewController).setMediaPlaybackRequiresUserGesture(false);
     }
 
@@ -93,14 +104,13 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
         double duration = double.tryParse(durationStr.toString()) ?? 0.0;
         _currentVideoDuration = duration;
 
-        // ৩০ সেকেন্ড লজিক
+        // Auto Open Recommendation Logic
         if (currentTime > 30 && !_hasShownAt30s && !_showRecommendations) {
           setState(() {
             _showRecommendations = true;
             _hasShownAt30s = true;
           });
         }
-        // শেষ ১০ সেকেন্ড লজিক
         if (duration > 0 && (duration - currentTime) <= 10 && !_showRecommendations) {
           if (currentTime > (duration - 9)) {
             setState(() {
@@ -109,12 +119,11 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
           }
         }
       } catch (e) {
-        // ইগনোর এরর
+        // Ignore
       }
     });
   }
 
-  // [PERFORMANCE FIX 3]: CSS দিয়ে GPU ফোর্স করা (মেইন ল্যাগ ফিক্স)
   String _getVideoHtml(String url) {
     return '''
       <!DOCTYPE html>
@@ -123,18 +132,11 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
           body { margin: 0; background-color: black; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-          
-          /* ভিডিও এলিমেন্টে হার্ডওয়্যার অ্যাকসিলারেশন */
           video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-            transform: translate3d(0, 0, 0); /* GPU Force Trigger */
-            -webkit-transform: translate3d(0, 0, 0);
+            width: 100%; height: 100%; object-fit: contain; 
+            transform: translate3d(0, 0, 0); 
             will-change: transform;
           }
-          
-          /* প্লেয়ার কন্ট্রোল ডিজাইন */
           video::-webkit-media-controls-panel { background-image: linear-gradient(transparent, rgba(0,0,0,0.5)); }
         </style>
       </head>
@@ -158,7 +160,6 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
 
   void _onBackPress() {
     _progressTimer?.cancel();
-    // বের হওয়ার সময় আগের UI মোড ফেরত আনা
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     Get.back();
   }
@@ -171,8 +172,6 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final suggestions = widget.allVideos.where((url) => url != widget.initialVideoUrl).toList();
-
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
@@ -182,32 +181,21 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // ------------------------------------------
-            // 1. MAIN VIDEO PLAYER (Single WebView)
-            // ------------------------------------------
-            Center(
-              child: WebViewWidget(controller: _webViewController),
-            ),
+            // 1. MAIN PLAYER
+            Center(child: WebViewWidget(controller: _webViewController)),
 
-            // Loading Indicator
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator(color: Colors.red)),
+            // Loading
+            if (_isLoading) const Center(child: CircularProgressIndicator(color: Colors.red)),
 
-            // ------------------------------------------
-            // 2. CONTROL BUTTONS (Top Layer)
-            // ------------------------------------------
+            // 2. CONTROLS
             Positioned(
               top: 40, left: 15,
               child: CircleAvatar(
                 backgroundColor: Colors.black54,
                 radius: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                  onPressed: _onBackPress,
-                ),
+                child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20), onPressed: _onBackPress),
               ),
             ),
-
             Positioned(
               top: 40, right: 15,
               child: CircleAvatar(
@@ -215,16 +203,12 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
                 radius: 20,
                 child: IconButton(
                   icon: Icon(_showRecommendations ? Icons.close : Icons.playlist_play, color: Colors.white, size: 20),
-                  onPressed: () {
-                    setState(() => _showRecommendations = !_showRecommendations);
-                  },
+                  onPressed: () => setState(() => _showRecommendations = !_showRecommendations),
                 ),
               ),
             ),
 
-            // ------------------------------------------
-            // 3. RECOMMENDATIONS SIDEBAR (Smart List)
-            // ------------------------------------------
+            // 3. RECOMMENDATIONS SIDEBAR
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
@@ -234,7 +218,7 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
                 margin: const EdgeInsets.only(right: 5),
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.9), // Glass Effect
+                  color: Colors.black.withOpacity(0.9),
                   borderRadius: const BorderRadius.only(topLeft: Radius.circular(15), bottomLeft: Radius.circular(15)),
                   border: Border.all(color: Colors.white12),
                   boxShadow: [const BoxShadow(color: Colors.black45, blurRadius: 10)],
@@ -248,19 +232,18 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text("Up Next", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                          if(_currentVideoDuration > 0)
-                            const Icon(Icons.flash_on, color: Colors.amber, size: 14)
+                          if(_currentVideoDuration > 0) const Icon(Icons.flash_on, color: Colors.amber, size: 14)
                         ],
                       ),
                     ),
                     Expanded(
                       child: ListView.builder(
-                        itemCount: suggestions.length,
+                        itemCount: _shuffledSuggestions.length,
                         physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
-                          final url = suggestions[index];
-                          // এখানে আমরা একটি স্মার্ট থাম্বনেইল উইজেট ব্যবহার করছি
-                          return _buildSmartThumbnailCard(url, index);
+                          final url = _shuffledSuggestions[index];
+                          // 🔥 Real Video Thumbnail Widget
+                          return _RealVideoThumbnailCard(videoUrl: url, index: index, onTap: () => _playSuggestedVideo(url));
                         },
                       ),
                     ),
@@ -273,26 +256,66 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
       ),
     );
   }
+}
 
-  // ----------------------------------------------------
-  // 🧩 SMART THUMBNAIL BUILDER (No Lag, Looks Real)
-  // ----------------------------------------------------
-  Widget _buildSmartThumbnailCard(String url, int index) {
-    // র‍্যান্ডম সিড ব্যবহার করছি যাতে একই ভিডিওর জন্য সবসময় একই ছবি আসে
-    // কিন্তু ভিন্ন ভিডিওর জন্য ভিন্ন ছবি আসে।
-    final int randomSeed = url.hashCode + index;
-    final Random random = Random(randomSeed);
+// =========================================================
+// 🔥 REAL VIDEO THUMBNAIL WIDGET (Using WebView Trick)
+// =========================================================
+class _RealVideoThumbnailCard extends StatefulWidget {
+  final String videoUrl;
+  final int index;
+  final VoidCallback onTap;
 
-    // ফেইক ডিউরেশন তৈরি (যেমন: 04:20, 02:15 ইত্যাদি)
-    final String minutes = (random.nextInt(5) + 1).toString().padLeft(2, '0');
-    final String seconds = random.nextInt(60).toString().padLeft(2, '0');
-    final String duration = "$minutes:$seconds";
+  const _RealVideoThumbnailCard({required this.videoUrl, required this.index, required this.onTap});
 
-    // র‍্যান্ডম ইমেজ URL (Picsum - হাই কোয়ালিটি, ফাস্ট)
-    final String imageUrl = "https://picsum.photos/seed/$randomSeed/300/180";
+  @override
+  State<_RealVideoThumbnailCard> createState() => _RealVideoThumbnailCardState();
+}
+
+class _RealVideoThumbnailCardState extends State<_RealVideoThumbnailCard> with AutomaticKeepAliveClientMixin {
+  late WebViewController _thumbnailController;
+  bool _isLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // WebView ইনিশিয়ালাইজেশন (Thumbnail Mode)
+    _thumbnailController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.black) // ব্যাকগ্রাউন্ড কালো
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (_) {
+          if (mounted) setState(() => _isLoaded = true);
+        },
+      ));
+
+    // HTML5 Trick: #t=0.1 দিয়ে ভিডিওর প্রথম ফ্রেম দেখানো
+    String html = '''
+      <html>
+      <body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <video 
+          style="width:100%;height:100%;object-fit:cover;pointer-events:none;" 
+          muted 
+          preload="metadata" 
+          src="${widget.videoUrl}#t=0.1">
+        </video>
+      </body>
+      </html>
+    ''';
+
+    _thumbnailController.loadHtmlString(html);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    // র‍্যান্ডম ডিউরেশন জেনারেট করা (Real Feel এর জন্য)
+    final random = Random(widget.videoUrl.hashCode);
+    final String duration = "${random.nextInt(5) + 1}:${random.nextInt(60).toString().padLeft(2, '0')}";
 
     return GestureDetector(
-      onTap: () => _playSuggestedVideo(url),
+      onTap: widget.onTap,
       child: Container(
         height: 100,
         margin: const EdgeInsets.only(bottom: 12),
@@ -306,29 +329,24 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // 1. Random High Quality Image
-              Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(color: Colors.grey[900]);
-                },
-                errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[800], child: const Icon(Icons.broken_image, color: Colors.white24)),
+              // 1. WebView Thumbnail (Real Video Frame)
+              AnimatedOpacity(
+                opacity: _isLoaded ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                child: WebViewWidget(controller: _thumbnailController),
               ),
 
-              // 2. Black Gradient Overlay (টেক্সট পড়ার জন্য)
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [Colors.black87, Colors.transparent],
-                  ),
+              // 2. Touch Blocker (To prevent webview gestures)
+              Container(color: Colors.transparent),
+
+              // 3. Loading Placeholder
+              if (!_isLoaded)
+                Container(
+                  color: Colors.grey[900],
+                  child: const Center(child: Icon(Icons.video_library, color: Colors.white12, size: 30)),
                 ),
-              ),
 
-              // 3. Play Icon (Center)
+              // 4. Play Icon Overlay
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(6),
@@ -341,30 +359,22 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
                 ),
               ),
 
-              // 4. Fake Duration (Bottom Right)
+              // 5. Duration Badge
               Positioned(
-                bottom: 6,
-                right: 6,
+                bottom: 6, right: 6,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    duration,
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
+                  decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(4)),
+                  child: Text(duration, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
               ),
 
-              // 5. Video Index/Title (Bottom Left) q
+              // 6. Video Number
               Positioned(
-                bottom: 6,
-                left: 6,
+                bottom: 6, left: 6,
                 child: Text(
-                  "Video Clip ${index + 1}",
-                  style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+                  "Video #${widget.index + 1}",
+                  style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -373,4 +383,7 @@ class _FullVideoPlayerScreenState extends State<FullVideoPlayerScreen> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true; // স্ক্রল করলেও লোড হয়ে থাকবে
 }
