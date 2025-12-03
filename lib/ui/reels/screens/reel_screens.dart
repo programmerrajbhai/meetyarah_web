@@ -14,7 +14,7 @@ import '../ads/AdWebViewScreen.dart';
 import '../profile_screens/screens/view_profile_screens.dart';
 
 // ==========================================
-// 1. UPDATED DATA MODEL (With Overview & Service Info)
+// 1. DATA MODEL
 // ==========================================
 class VideoDataModel {
   final String url;
@@ -28,14 +28,14 @@ class VideoDataModel {
   final String profileImage;
   final String coverImage;
   final String bio;
-  final String subscribers; // Followers
+  final String subscribers;
   final bool isVerified;
 
-  // 🔥 নতুন: প্রোফাইল ওভারভিউ এর জন্য ডেটা
+  // Premium & Overview Data
   final String premiumSubscribers;
   final String serviceOverview;
   final String clientFeedback;
-  final String contactPrice; // Pay contact with she
+  final String contactPrice;
 
   final List<String> freeContentImages;
   final List<String> premiumContentImages;
@@ -53,7 +53,7 @@ class VideoDataModel {
 }
 
 // ==========================================
-// 2. DATA HELPER (100% DATA GENERATION)
+// 2. DATA HELPER
 // ==========================================
 class VideoDataHelper {
   static final List<String> _profileImages = [
@@ -161,7 +161,7 @@ class VideoDataHelper {
 }
 
 // ==========================================
-// 3. REEL SCREENS (UI)
+// 3. REEL SCREENS (MAIN UI)
 // ==========================================
 class ReelScreens extends StatefulWidget {
   const ReelScreens({super.key});
@@ -274,7 +274,10 @@ class _ReelScreensState extends State<ReelScreens> {
 }
 
 // ==========================================
-// 4. FACEBOOK VIDEO CARD
+// 4. UPDATED FACEBOOK VIDEO CARD (MODERN)
+// ==========================================
+// ==========================================
+// 4. UPDATED FACEBOOK VIDEO CARD (With Reactions)
 // ==========================================
 class FacebookVideoCard extends StatefulWidget {
   final VideoDataModel videoData;
@@ -290,7 +293,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with AutomaticKee
   bool _isLoading = true;
   bool _isPreviewing = false;
   double _scale = 1.0;
+
+  // --- Reaction States ---
   bool _isLiked = false;
+  String _selectedReaction = 'Like'; // Default reaction
+  bool _showReactionDock = false; // To show/hide emoji panel
+
+  // Colors
+  final Color fbBlue = const Color(0xFF1877F2);
 
   @override
   void initState() {
@@ -328,92 +338,289 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with AutomaticKee
     Get.to(() => ProfileViewScreen(userData: widget.videoData));
   }
 
-  void _toggleLike() {
-    setState(() {
-      _isLiked = !_isLiked;
-    });
+  // --- Logic: Like Button Tap ---
+  void _handleLikeTap() {
     HapticFeedback.lightImpact();
+    setState(() {
+      _showReactionDock = false; // Hide dock if open
+      if (_isLiked) {
+        // Unlike if already liked
+        _isLiked = false;
+        _selectedReaction = 'Like';
+      } else {
+        // Simple Like
+        _isLiked = true;
+        _selectedReaction = 'Like';
+      }
+    });
+  }
+
+  // --- Logic: Select Specific Reaction ---
+  void _handleReactionSelect(String reaction) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _selectedReaction = reaction;
+      _isLiked = true;
+      _showReactionDock = false; // Hide dock after selection
+    });
   }
 
   void _shareVideo() {
-    Share.share("🔥 Check out this viral video: ${widget.videoData.title}");
+    Share.share("🔥 Check out this viral video by ${widget.videoData.channelName}: ${widget.videoData.title}");
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final video = widget.videoData;
-    return Container(
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+
+    return GestureDetector(
+      // Tap anywhere on card to close reaction dock
+      onTap: () {
+        if (_showReactionDock) setState(() => _showReactionDock = false);
+      },
+      child: Stack(
+        clipBehavior: Clip.none, // Allow dock to float slightly if needed
         children: [
-          ListTile(
-            leading: InkWell(
-              onTap: _onTapProfile,
-              child: CircleAvatar(backgroundImage: NetworkImage(video.profileImage)),
-            ),
-            title: InkWell(
-              onTap: _onTapProfile,
-              child: Row(
-                children: [
-                  Text(video.channelName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  if(video.isVerified) ...[
-                    const SizedBox(width: 5),
-                    const Icon(Icons.verified, color: Colors.blue, size: 16),
-                  ]
-                ],
-              ),
-            ),
-            subtitle: Text("${video.timeAgo} · 🌎"),
-            trailing: const Icon(Icons.more_horiz),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(video.title, style: const TextStyle(fontSize: 15)),
-          ),
-          GestureDetector(
-            onTap: _onTapVideo,
-            onLongPressStart: (_) {
-              HapticFeedback.selectionClick();
-              setState(() { _isPreviewing = true; _scale = 1.02; });
-              _webViewController.runJavaScript('document.querySelector("video").play();');
-            },
-            onLongPressEnd: (_) {
-              setState(() { _isPreviewing = false; _scale = 1.0; });
-              _webViewController.runJavaScript('document.querySelector("video").pause();');
-            },
-            child: AnimatedScale(
-              scale: _scale,
-              duration: const Duration(milliseconds: 150),
-              child: Container(
-                height: 350, width: double.infinity, color: Colors.black,
-                child: Stack(
+          // ------------------------------------
+          // MAIN CARD CONTENT
+          // ------------------------------------
+          Container(
+            color: Colors.white,
+            margin: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // A. Header
+                ListTile(
+                  leading: InkWell(
+                    onTap: _onTapProfile,
+                    child: CircleAvatar(backgroundImage: NetworkImage(video.profileImage)),
+                  ),
+                  title: InkWell(
+                    onTap: _onTapProfile,
+                    child: Row(
+                      children: [
+                        Flexible(child: Text(video.channelName, style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                        if(video.isVerified) ...[
+                          const SizedBox(width: 5),
+                          const Icon(Icons.verified, color: Colors.blue, size: 16),
+                        ]
+                      ],
+                    ),
+                  ),
+                  subtitle: Text("${video.timeAgo} · 🌎"),
+                  trailing: IconButton(icon: const Icon(Icons.more_horiz), onPressed: () {}),
+                ),
+
+                // B. Caption
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(video.title, style: const TextStyle(fontSize: 15)),
+                ),
+                const SizedBox(height: 5),
+
+                // C. Video Player
+                GestureDetector(
+                  onTap: _onTapVideo,
+                  onLongPressStart: (_) {
+                    HapticFeedback.selectionClick();
+                    setState(() { _isPreviewing = true; _scale = 1.02; });
+                    _webViewController.runJavaScript('document.querySelector("video").play();');
+                  },
+                  onLongPressEnd: (_) {
+                    setState(() { _isPreviewing = false; _scale = 1.0; });
+                    _webViewController.runJavaScript('document.querySelector("video").pause();');
+                  },
+                  child: AnimatedScale(
+                    scale: _scale,
+                    duration: const Duration(milliseconds: 150),
+                    child: Container(
+                      height: 350, width: double.infinity, color: Colors.black,
+                      child: Stack(
+                        children: [
+                          WebViewWidget(controller: _webViewController),
+                          Container(color: Colors.transparent),
+                          if (_isLoading) const Center(child: CircularProgressIndicator(color: Colors.white)),
+                          if (_isPreviewing) const Center(child: Text("PREVIEW", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // D. Stats Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      _buildStatsIcon(), // Dynamic Icon based on reaction
+                      const SizedBox(width: 5),
+                      Text(_isLiked ? "You and ${video.likes} others" : video.likes, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                      const Spacer(),
+                      Text("${video.comments} Comments  •  ${video.views} Views", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 0, thickness: 1),
+
+                // E. Action Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    WebViewWidget(controller: _webViewController),
-                    Container(color: Colors.transparent), // Touch Blocker
-                    if (_isLoading) const Center(child: CircularProgressIndicator(color: Colors.white)),
-                    if (_isPreviewing) const Center(child: Text("PREVIEW", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20))),
+                    // --- LIKE BUTTON (With Long Press) ---
+                    GestureDetector(
+                      onLongPress: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _showReactionDock = true);
+                      },
+                      onTap: _handleLikeTap,
+                      child: _buildActionButton(
+                        icon: _getReactionButtonIcon(),
+                        label: _isLiked ? _selectedReaction : "Like",
+                        color: _getReactionColor(),
+                      ),
+                    ),
+
+                    // --- COMMENT ---
+                    GestureDetector(
+                      onTap: () => Get.snackbar("Comment", "Comments are disabled."),
+                      child: _buildActionButton(icon: Icons.mode_comment_outlined, label: "Comment", color: Colors.grey[700]!),
+                    ),
+
+                    // --- SHARE ---
+                    GestureDetector(
+                      onTap: _shareVideo,
+                      child: _buildActionButton(icon: Icons.share_outlined, label: "Share", color: Colors.grey[700]!),
+                    ),
                   ],
                 ),
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Icon(Icons.thumb_up_alt_outlined, color: Colors.grey),
-                const Icon(Icons.comment_outlined, color: Colors.grey),
-                const Icon(Icons.share_outlined, color: Colors.grey),
+                const SizedBox(height: 5),
               ],
             ),
-          )
+          ),
+
+          // ------------------------------------
+          // REACTION DOCK (Floating Layer)
+          // ------------------------------------
+          if (_showReactionDock)
+            Positioned(
+              bottom: 40, // Position above the buttons
+              left: 10,
+              child: _buildReactionDock(),
+            ),
         ],
       ),
     );
   }
+
+  // --- Helper Widgets ---
+
+  Widget _buildReactionDock() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          const BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _reactionEmoji('Like', '👍'),
+          _reactionEmoji('Love', '❤️'),
+          _reactionEmoji('Haha', '😆'),
+          _reactionEmoji('Wow', '😮'),
+          _reactionEmoji('Sad', '😢'),
+          _reactionEmoji('Angry', '😡'),
+        ],
+      ),
+    );
+  }
+
+  Widget _reactionEmoji(String name, String emoji) {
+    return GestureDetector(
+      onTap: () => _handleReactionSelect(name),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required dynamic icon, required String label, required Color color}) {
+    return Container(
+      color: Colors.transparent, // Ensures hit test works on padding
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      child: Row(
+        children: [
+          icon is IconData ? Icon(icon, color: color, size: 20) : icon,
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  // --- Dynamic Icons & Colors ---
+
+  // For the Button (Icon or Emoji Text)
+  Widget _getReactionButtonIcon() {
+    if (!_isLiked) return Icon(Icons.thumb_up_alt_outlined, color: Colors.grey[700], size: 20);
+
+    switch (_selectedReaction) {
+      case 'Love': return const Text('❤️', style: TextStyle(fontSize: 18));
+      case 'Haha': return const Text('😆', style: TextStyle(fontSize: 18));
+      case 'Wow':  return const Text('😮', style: TextStyle(fontSize: 18));
+      case 'Sad':  return const Text('😢', style: TextStyle(fontSize: 18));
+      case 'Angry':return const Text('😡', style: TextStyle(fontSize: 18));
+      default: return Icon(Icons.thumb_up, color: fbBlue, size: 20); // Default Like
+    }
+  }
+
+  // For the Stats Row (Small Icon)
+  Widget _buildStatsIcon() {
+    if (!_isLiked || _selectedReaction == 'Like') {
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: const BoxDecoration(color: Color(0xFF1877F2), shape: BoxShape.circle),
+        child: const Icon(Icons.thumb_up, size: 10, color: Colors.white),
+      );
+    }
+    // Return emoji for other reactions in stats
+    String emoji = '👍';
+    if(_selectedReaction == 'Love') emoji = '❤️';
+    if(_selectedReaction == 'Haha') emoji = '😆';
+    if(_selectedReaction == 'Wow') emoji = '😮';
+    if(_selectedReaction == 'Sad') emoji = '😢';
+    if(_selectedReaction == 'Angry') emoji = '😡';
+
+    return Text(emoji, style: const TextStyle(fontSize: 14));
+  }
+
+  Color _getReactionColor() {
+    if (!_isLiked) return Colors.grey[700]!;
+    switch (_selectedReaction) {
+      case 'Love': return Colors.red;
+      case 'Haha':
+      case 'Wow':
+      case 'Sad': return Colors.amber.shade700;
+      case 'Angry': return Colors.deepOrange;
+      default: return fbBlue;
+    }
+  }
+
   @override bool get wantKeepAlive => true;
 }
+
+
+
+
