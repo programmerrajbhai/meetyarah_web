@@ -1,14 +1,12 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../adsterra/adsterra_configs.dart';
 import '../ads/AdWebViewScreen.dart';
@@ -27,7 +25,6 @@ class VideoDataModel {
   final String timeAgo;
   final String duration;
   final String profileImage;
-  // final String coverImage;
   final String bio;
   final String subscribers;
   final bool isVerified;
@@ -48,7 +45,6 @@ class VideoDataModel {
     required this.timeAgo,
     required this.duration,
     required this.profileImage,
-    // required this.coverImage,
     required this.bio,
     required this.subscribers,
     required this.freeContentImages,
@@ -71,49 +67,30 @@ class VideoDataHelper {
     'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=400',
   ];
 
-  static final List<String> _girlNames = [
-    "Sofia Rose",
-    "Anika Vlogz",
-    "Misty Night",
-    "Bella X",
-    "Desi Queen",
-  ];
-  static final List<String> _titles = [
-    "Viral Video 🔥",
-    "Late night fun 🤫",
-    "My new dance cover 💃",
-    "Behind the scenes...",
-    "Must Watch! 😱",
-  ];
+  static final List<String> _girlNames = ["Sofia Rose", "Anika Vlogz", "Misty Night", "Bella X", "Desi Queen"];
+  static final List<String> _titles = ["Viral Video 🔥", "Late night fun 🤫", "My new dance cover 💃", "Behind the scenes...", "Must Watch! 😱"];
 
   static List<String> _generateContentImages(int count, int seed) {
-    return List.generate(
-      count,
-      (i) => "https://source.unsplash.com/random/300x400?sig=${seed + i}",
-    );
+    return List.generate(count, (i) => "https://source.unsplash.com/random/300x400?sig=${seed + i}");
   }
 
   static List<VideoDataModel> generateVideos(int count) {
     var random = Random();
     return List.generate(count, (index) {
       int id = 64000 + index;
-      String pImg = _profileImages[random.nextInt(_profileImages.length)];
-      String name = _girlNames[random.nextInt(_girlNames.length)];
-      String title = _titles[random.nextInt(_titles.length)];
-
       return VideoDataModel(
         url: 'https://ser3.masahub.cc/myfiless/id/$id.mp4',
-        title: title,
-        channelName: name,
-        profileImage: pImg,
+        title: _titles[random.nextInt(_titles.length)],
+        channelName: _girlNames[random.nextInt(_girlNames.length)],
+        profileImage: _profileImages[random.nextInt(_profileImages.length)],
         bio: "Content Creator ✨",
         views: "${(random.nextDouble() * 5 + 0.1).toStringAsFixed(1)}M",
         likes: "${random.nextInt(50) + 5}K",
         comments: "${random.nextInt(1000) + 100}",
         timeAgo: "${random.nextInt(23) + 1}h",
-        duration: "${random.nextInt(10) + 1}:${random.nextInt(50) + 10}",
-        subscribers: "${(random.nextDouble() * 2 + 0.1).toStringAsFixed(1)}M",
-        premiumSubscribers: "${random.nextInt(500) + 100}K",
+        duration: "0:30",
+        subscribers: "1.2M",
+        premiumSubscribers: "100K",
         serviceOverview: "Available for shoutouts",
         clientFeedback: "Great work!",
         contactPrice: "\$${random.nextInt(50) + 20}",
@@ -126,7 +103,7 @@ class VideoDataHelper {
 }
 
 // ==========================================
-// 3. REEL SCREENS (MAIN UI)
+// 3. REEL SCREENS (SMART FEED UI)
 // ==========================================
 class ReelScreens extends StatefulWidget {
   const ReelScreens({super.key});
@@ -138,15 +115,41 @@ class _ReelScreensState extends State<ReelScreens> {
   List<VideoDataModel> _allVideos = [];
   bool _isLoading = true;
 
+  // Autoplay Logic
+  int _focusedIndex = 0;
+  final ScrollController _scrollController = ScrollController();
+  // ওয়েব এবং মোবাইলের জন্য আলাদা হাইট এস্টিমেশন
+  double get _itemHeight => kIsWeb ? 600.0 : 500.0;
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final offset = _scrollController.offset;
+    // ডাইনামিক হাইট ক্যালকুলেশন করে ইনডেক্স বের করা
+    final index = (offset / _itemHeight).round();
+
+    if (_focusedIndex != index) {
+      setState(() {
+        _focusedIndex = index;
+      });
+    }
   }
 
   void _loadData() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    var list = VideoDataHelper.generateVideos(50);
+    await Future.delayed(const Duration(milliseconds: 800));
+    var list = VideoDataHelper.generateVideos(kIsWeb ? 30 : 50);
     list.shuffle();
     if (mounted) {
       setState(() {
@@ -165,86 +168,118 @@ class _ReelScreensState extends State<ReelScreens> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: const Text(
-          "facebook",
-          style: TextStyle(
-            color: Color(0xFF1877F2),
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-            letterSpacing: -1.2,
-          ),
-        ),
-        actions: [
-          _circleButton(Icons.search),
-          _circleButton(Icons.chat_bubble),
-          const SizedBox(width: 10),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _onRefresh,
-        color: const Color(0xFF1877F2),
-        child: _isLoading
-            ? _buildShimmerLoading()
-            : ListView.builder(
-                // ✅ Smooth Scrolling Settings
-                physics: const AlwaysScrollableScrollPhysics(),
-                cacheExtent: 3000,
-                addAutomaticKeepAlives: true,
-                itemCount: _allVideos.length,
-                itemBuilder: (context, index) {
-                  return FacebookVideoCard(
+      appBar: _buildResponsiveAppBar(),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: const Color(0xFF1877F2),
+            child: _isLoading
+                ? _buildShimmerLoading()
+                : ListView.builder(
+              controller: _scrollController,
+              itemCount: _allVideos.length,
+              physics: const AlwaysScrollableScrollPhysics(),
+              cacheExtent: kIsWeb ? 800 : 1500,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: FacebookVideoCard(
                     key: ValueKey(_allVideos[index].url),
                     videoData: _allVideos[index],
                     allVideosList: _allVideos.map((e) => e.url).toList(),
-                  );
-                },
-              ),
+                    shouldPlay: index == _focusedIndex,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _circleButton(IconData icon) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        shape: BoxShape.circle,
+  AppBar _buildResponsiveAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 1,
+      centerTitle: false,
+      titleSpacing: kIsWeb ? 20 : 0,
+      title: const Text(
+        "facebook",
+        style: TextStyle(
+          color: Color(0xFF1877F2),
+          fontWeight: FontWeight.bold,
+          fontSize: 28,
+          letterSpacing: -1.2,
+        ),
       ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.black, size: 24),
-        onPressed: () {},
+      actions: [
+        if (kIsWeb) ...[
+          _webNavIcon(Icons.home, true),
+          _webNavIcon(Icons.ondemand_video, false),
+          _webNavIcon(Icons.storefront, false),
+          _webNavIcon(Icons.group, false),
+          const SizedBox(width: 20),
+        ],
+        _circleButton(Icons.search),
+        _circleButton(Icons.chat_bubble),
+        if(kIsWeb) _circleButton(Icons.refresh, onTap: _onRefresh),
+        const SizedBox(width: 10),
+      ],
+    );
+  }
+
+  Widget _webNavIcon(IconData icon, bool isActive) {
+    return Container(
+      width: 80,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        border: isActive ? const Border(bottom: BorderSide(color: Color(0xFF1877F2), width: 3)) : null,
+      ),
+      child: Icon(
+        icon,
+        color: isActive ? const Color(0xFF1877F2) : Colors.grey[600],
+        size: 28,
+      ),
+    );
+  }
+
+  Widget _circleButton(IconData icon, {VoidCallback? onTap}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap ?? () {},
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.black, size: 22),
+        ),
       ),
     );
   }
 
   Widget _buildShimmerLoading() {
     return ListView.builder(
-      itemCount: 3,
-      itemBuilder: (_, __) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        color: Colors.white,
-        child: Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Column(
-            children: [
-              ListTile(
-                leading: const CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white,
-                ),
-                title: Container(height: 10, width: 100, color: Colors.white),
-                subtitle: Container(height: 10, width: 60, color: Colors.white),
-              ),
-              Container(
-                height: 300,
-                width: double.infinity,
-                color: Colors.white,
-              ),
-            ],
+      itemCount: 2,
+      itemBuilder: (_, __) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Container(
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Column(
+              children: [
+                Container(height: 60, margin: const EdgeInsets.all(10), color: Colors.white),
+                Container(height: 300, color: Colors.white),
+              ],
+            ),
           ),
         ),
       ),
@@ -253,456 +288,358 @@ class _ReelScreensState extends State<ReelScreens> {
 }
 
 // ==========================================
-// 4. FACEBOOK VIDEO CARD (CLICK & SCROLL FIXED)
+// 4. FACEBOOK VIDEO CARD (PRO FEATURES)
 // ==========================================
 class FacebookVideoCard extends StatefulWidget {
   final VideoDataModel videoData;
   final List<String> allVideosList;
+  final bool shouldPlay;
+
   const FacebookVideoCard({
     super.key,
     required this.videoData,
     required this.allVideosList,
+    required this.shouldPlay,
   });
 
   @override
   State<FacebookVideoCard> createState() => _FacebookVideoCardState();
 }
 
-class _FacebookVideoCardState extends State<FacebookVideoCard>
-    with AutomaticKeepAliveClientMixin {
-  late WebViewController _thumbnailWebController;
+class _FacebookVideoCardState extends State<FacebookVideoCard> with SingleTickerProviderStateMixin {
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+  bool _isMuted = true;
 
-  bool _isLiked = false;
-  String _selectedReaction = 'Like';
-  bool _showReactionDock = false;
-  final Color fbBlue = const Color(0xFF1877F2);
+  // Animation States
+  bool _showHeart = false; // Double tap heart
+  bool _controlsVisible = true; // Auto hide controls
+  Timer? _hideTimer;
 
-  Uint8List? _thumbnailBytes;
-  bool _isThumbnailLoading = true;
+  // Like Animation
+  late AnimationController _heartAnimationController;
+  late Animation<double> _heartScale;
 
   @override
   void initState() {
     super.initState();
-    _initializeThumbnail();
-  }
+    _initializeVideo();
 
-  void _initializeThumbnail() {
-    if (kIsWeb) {
-      _thumbnailWebController = WebViewController();
+    // Heart Animation Setup
+    _heartAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _heartScale = Tween<double>(begin: 0.0, end: 1.2).animate(
+        CurvedAnimation(parent: _heartAnimationController, curve: Curves.elasticOut)
+    );
 
-      // ✅ Web: ভিডিও প্রিভিউ থাম্বনেইল হিসেবে
-      String cleanUrl = widget.videoData.url.replaceFirst(
-        "http://",
-        "https://",
-      );
-      String html =
-          '''
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-          <style>
-            body { margin:0; padding:0; background:#000; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-            video { width:100%; height:100%; object-fit:cover; }
-          </style>
-        </head>
-        <body>
-          <video muted playsinline preload="metadata">
-            <source src="$cleanUrl#t=0.1" type="video/mp4">
-          </video>
-        </body>
-        </html>
-      ''';
-
-      _thumbnailWebController.loadHtmlString(html);
-    } else {
-      // ✅ Mobile: ইমেজ থাম্বনেইল
-      _generateNativeThumbnail();
-    }
-  }
-
-  Future<void> _generateNativeThumbnail() async {
-    try {
-      final uint8list = await VideoThumbnail.thumbnailData(
-        video: widget.videoData.url,
-        imageFormat: ImageFormat.JPEG,
-        maxWidth: 512,
-        quality: 50,
-      );
-      if (mounted) {
-        setState(() {
-          _thumbnailBytes = uint8list;
-          _isThumbnailLoading = false;
+    _heartAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if(mounted) setState(() => _showHeart = false);
+          _heartAnimationController.reset();
         });
       }
-    } catch (e) {
-      if (mounted) setState(() => _isThumbnailLoading = false);
+    });
+  }
+
+  @override
+  void didUpdateWidget(FacebookVideoCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.shouldPlay != widget.shouldPlay) {
+      if (widget.shouldPlay) {
+        _controller?.play();
+        _startHideTimer();
+      } else {
+        _controller?.pause();
+      }
     }
   }
 
-  void _onTapVideo() {
-    Get.to(
-      () => AdWebViewScreen(
-        adLink: AdsterraConfigs.monetagHomeLink,
-        targetVideoUrl: widget.videoData.url,
-        allVideos: widget.allVideosList,
-      ),
-    );
+  void _initializeVideo() {
+    String url = widget.videoData.url.replaceFirst("http://", "https://");
+    _controller = VideoPlayerController.networkUrl(Uri.parse(url))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() => _isInitialized = true);
+          if (widget.shouldPlay) {
+            _controller?.setVolume(_isMuted ? 0 : 1);
+            _controller?.play();
+            _controller?.setLooping(true);
+            _startHideTimer();
+          }
+        }
+      }).catchError((e) {
+        debugPrint("Video Error: $e");
+      });
   }
 
-  void _onTapProfile() {
-    Get.to(() => ProfileViewScreen(userData: widget.videoData));
-  }
-
-  void _handleLikeTap() {
-    HapticFeedback.lightImpact();
-    setState(() {
-      _showReactionDock = false;
-      _isLiked = !_isLiked;
-      _selectedReaction = _isLiked ? 'Like' : 'Like';
+  void _startHideTimer() {
+    _hideTimer?.cancel();
+    if(mounted) setState(() => _controlsVisible = true);
+    _hideTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _controller!.value.isPlaying) {
+        setState(() => _controlsVisible = false);
+      }
     });
   }
 
-  void _handleReactionSelect(String reaction) {
+  void _onDoubleTapLike() {
+    // Show Heart Animation
+    setState(() => _showHeart = true);
+    _heartAnimationController.forward();
+
+    // Haptic Feedback
     HapticFeedback.mediumImpact();
+
+    // TODO: Call your Like API here
+  }
+
+  void _toggleMute() {
     setState(() {
-      _selectedReaction = reaction;
-      _isLiked = true;
-      _showReactionDock = false;
+      _isMuted = !_isMuted;
+      _controller?.setVolume(_isMuted ? 0 : 1);
+      _startHideTimer(); // Reset timer on interaction
     });
   }
 
-  void _shareVideo() {
-    Share.share("🔥 Check out this viral video: ${widget.videoData.title}");
+  void _togglePlayPause() {
+    if (_controller!.value.isPlaying) {
+      _controller?.pause();
+      setState(() => _controlsVisible = true); // Pause করলে কন্ট্রোল দেখাবে
+    } else {
+      _controller?.play();
+      _startHideTimer();
+    }
+    setState(() {});
+  }
+
+  void _openFullScreen() {
+    _controller?.pause();
+    Get.to(() => AdWebViewScreen(
+      adLink: AdsterraConfigs.monetagHomeLink,
+      targetVideoUrl: widget.videoData.url,
+      allVideos: widget.allVideosList,
+    ))?.then((_) {
+      if (widget.shouldPlay) _controller?.play();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    _heartAnimationController.dispose();
+    _hideTimer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final video = widget.videoData;
 
-    // ❌ Parent GestureDetector removed (Fixes conflict)
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 5,
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: kIsWeb ? BorderRadius.circular(8) : null,
+        boxShadow: kIsWeb ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4))] : null,
+      ),
+      margin: EdgeInsets.only(bottom: kIsWeb ? 15 : 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            leading: InkWell(
+              onTap: () => Get.to(() => ProfileViewScreen(userData: video)),
+              child: CircleAvatar(backgroundImage: NetworkImage(video.profileImage)),
+            ),
+            title: InkWell(
+              onTap: () => Get.to(() => ProfileViewScreen(userData: video)),
+              child: Text(video.channelName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            subtitle: Text("${video.timeAgo} · 🌎", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            trailing: IconButton(
+              icon: const Icon(Icons.more_horiz),
+              onPressed: () {},
+              splashRadius: 20,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              ListTile(
-                leading: InkWell(
-                  onTap: _onTapProfile,
-                  child: CircleAvatar(
-                    backgroundImage: NetworkImage(video.profileImage),
-                  ),
-                ),
-                title: InkWell(
-                  onTap: _onTapProfile,
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          video.channelName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (video.isVerified) ...[
-                        const SizedBox(width: 5),
-                        const Icon(
-                          Icons.verified,
-                          color: Colors.blue,
-                          size: 16,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                subtitle: Text(
-                  "${video.timeAgo} · 🌎",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.more_horiz),
-                  onPressed: () {},
-                ),
-              ),
 
-              // Caption
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                child: Text(video.title, style: const TextStyle(fontSize: 15)),
-              ),
-              const SizedBox(height: 5),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text(video.title, style: const TextStyle(fontSize: 15)),
+          ),
 
-              // ✅ VIDEO THUMBNAIL AREA (CLICK & SCROLL FIXED)
-              SizedBox(
-                height: 350,
-                width: double.infinity,
+          const SizedBox(height: 5),
+
+          // ✅ PRO VIDEO PLAYER AREA
+          GestureDetector(
+            onDoubleTap: _onDoubleTapLike,
+            onTap: () {
+              if(!_controlsVisible) {
+                _startHideTimer(); // ট্যাপ করলে কন্ট্রোল আসবে
+              } else {
+                if(kIsWeb) _togglePlayPause(); // ওয়েবে ক্লিক করলে পজ
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              color: Colors.black,
+              child: _isInitialized
+                  ? AspectRatio(
+                aspectRatio: _controller!.value.aspectRatio > 1 ? _controller!.value.aspectRatio : 16/9,
                 child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    // 1. Background (WebView for Web / Image for Mobile)
-                    Positioned.fill(
+                    VideoPlayer(_controller!),
+
+                    // 1. Big Animated Heart (Like)
+                    if (_showHeart)
+                      ScaleTransition(
+                        scale: _heartScale,
+                        child: const Icon(Icons.favorite, color: Colors.white, size: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 10)]),
+                      ),
+
+                    // 2. Center Controls (Play/Pause) - Auto Hide
+                    AnimatedOpacity(
+                      opacity: _controlsVisible ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
                       child: Container(
-                        color: Colors.black,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            if (kIsWeb)
-                              // ✅ Web: WebView
-                              WebViewWidget(controller: _thumbnailWebController)
-                            else if (_thumbnailBytes != null)
-                              // ✅ Mobile: Thumbnail
-                              Image.memory(
-                                _thumbnailBytes!,
-                                height: 350,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              )
-                            else if (_isThumbnailLoading)
-                              Shimmer.fromColors(
-                                baseColor: Colors.grey[800]!,
-                                highlightColor: Colors.grey[700]!,
-                                child: Container(color: Colors.black),
-                              )
-                            else
-                              const Icon(
-                                Icons.video_library,
-                                color: Colors.white54,
-                                size: 50,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // 2. Transparent Overlay (✅ THE FIX)
-                    // এটি WebView এর ওপর থাকবে। ফলে ক্লিক এবং স্ক্রল দুটোই Flutter হ্যান্ডেল করবে।
-                    // WebView এর নিজস্ব স্ক্রলিং বা ক্লিক ব্লক হয়ে যাবে।
-                    Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior
-                            .translucent, // স্বচ্ছ অংশেও ক্লিক নেবে
-                        onTap: _onTapVideo, // ✅ ক্লিক করলে অ্যাড আসবে
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.4),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.8),
-                                  width: 2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.play_arrow_rounded,
-                                color: Colors.white,
-                                size: 50,
-                              ),
+                        color: Colors.black26,
+                        child: Center(
+                          child: IconButton(
+                            onPressed: _togglePlayPause,
+                            icon: Icon(
+                              _controller!.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                              size: 60,
+                              color: Colors.white.withOpacity(0.9),
                             ),
                           ),
                         ),
                       ),
                     ),
 
-                    // 3. Duration Badge
+                    // 3. Bottom Controls (Mute, Fullscreen, Progress)
                     Positioned(
-                      bottom: 10,
-                      right: 10,
-                      child: IgnorePointer(
-                        // ক্লিক যাতে নিচে পাস হয়
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            video.duration,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Control Buttons Row
+                          AnimatedOpacity(
+                            opacity: _controlsVisible ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Sound Button
+                                  GestureDetector(
+                                    onTap: _toggleMute,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(20)),
+                                      child: Icon(_isMuted ? Icons.volume_off : Icons.volume_up, color: Colors.white, size: 18),
+                                    ),
+                                  ),
+                                  // Fullscreen Button
+                                  GestureDetector(
+                                    onTap: _openFullScreen,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(20)),
+                                      child: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+
+                          // 4. Video Progress Bar (Thin Line)
+                          VideoProgressIndicator(
+                            _controller!,
+                            allowScrubbing: true,
+                            colors: const VideoProgressColors(
+                              playedColor: Colors.redAccent,
+                              bufferedColor: Colors.white24,
+                              backgroundColor: Colors.transparent,
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+              )
+                  : const SizedBox(
+                  height: 350,
+                  child: Center(child: CircularProgressIndicator(color: Colors.white))
               ),
+            ),
+          ),
 
-              // Stats
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF1877F2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.thumb_up,
-                        size: 10,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      _isLiked ? "You and ${video.likes} others" : video.likes,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                    const Spacer(),
-                    Text(
-                      "${video.comments} Comments  •  ${video.views} Views",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 0, thickness: 1),
+          // Footer Actions
+          _buildActionFooter(),
+        ],
+      ),
+    );
+  }
 
-              // Actions
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  GestureDetector(
-                    onLongPress: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _showReactionDock = true);
-                    },
-                    onTap: _handleLikeTap,
-                    child: _buildActionButton(
-                      icon: _isLiked
-                          ? Icons.thumb_up_alt
-                          : Icons.thumb_up_alt_outlined,
-                      label: "Like",
-                      color: _isLiked ? fbBlue : Colors.grey[700]!,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () =>
-                        Get.snackbar("Comment", "Comments are disabled."),
-                    child: _buildActionButton(
-                      icon: Icons.mode_comment_outlined,
-                      label: "Comment",
-                      color: Colors.grey[700]!,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _shareVideo,
-                    child: _buildActionButton(
-                      icon: Icons.share_outlined,
-                      label: "Share",
-                      color: Colors.grey[700]!,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
+  Widget _buildActionFooter() {
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                Icon(Icons.thumb_up, size: 14, color: Color(0xFF1877F2)),
+                SizedBox(width: 4),
+                Text("1.2K"),
+              ]),
+              Text("25 Comments  •  10 Shares", style: TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
         ),
-
-        if (_showReactionDock)
-          Positioned(bottom: 50, left: 15, child: _buildReactionDock()),
+        const Divider(height: 0, thickness: 1),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _actionBtn(Icons.thumb_up_outlined, "Like"),
+              _actionBtn(Icons.mode_comment_outlined, "Comment"),
+              _actionBtn(Icons.share_outlined, "Share"),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  // --- Helpers ---
-
-  Widget _buildReactionDock() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          const BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, 4),
+  Widget _actionBtn(IconData icon, String label) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {},
+        borderRadius: BorderRadius.circular(5),
+        hoverColor: Colors.grey[200],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.grey[700], size: 20),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 14)),
+            ],
           ),
-        ],
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _reactionEmoji('Like', '👍'),
-          _reactionEmoji('Love', '❤️'),
-          _reactionEmoji('Haha', '😆'),
-          _reactionEmoji('Wow', '😮'),
-        ],
+        ),
       ),
     );
   }
-
-  Widget _reactionEmoji(String name, String emoji) {
-    return GestureDetector(
-      onTap: () => _handleReactionSelect(name),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Text(emoji, style: const TextStyle(fontSize: 24)),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required dynamic icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      child: Row(
-        children: [
-          icon is IconData ? Icon(icon, color: color, size: 20) : icon,
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-
-
-
 }
