@@ -68,11 +68,24 @@ class VideoDataHelper {
     'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=400',
   ];
 
-  static final List<String> _girlNames = ["Sofia Rose", "Anika Vlogz", "Misty Night", "Bella X", "Desi Queen"];
-  static final List<String> _titles = ["Viral Video 🔥", "Late night fun 🤫", "My new dance cover 💃", "Behind the scenes...", "Must Watch! 😱"];
+  static final List<String> _girlNames = [
+    "Sofia Rose",
+    "Anika Vlogz",
+    "Misty Night",
+    "Bella X",
+    "Desi Queen"
+  ];
+  static final List<String> _titles = [
+    "Viral Video 🔥",
+    "Late night fun 🤫",
+    "My new dance cover 💃",
+    "Behind the scenes...",
+    "Must Watch! 😱"
+  ];
 
   static List<String> _generateContentImages(int count, int seed) {
-    return List.generate(count, (i) => "https://source.unsplash.com/random/300x400?sig=${seed + i}");
+    return List.generate(count,
+        (i) => "https://source.unsplash.com/random/300x400?sig=${seed + i}");
   }
 
   static List<VideoDataModel> generateVideos(int count) {
@@ -138,7 +151,8 @@ class _ReelScreensState extends State<ReelScreens> {
           debugPrint("Found Post ID in URL: $targetPostId");
 
           // ২. লিস্টের মধ্যে ওই ভিডিওটি খোঁজা (URL এর মধ্যে ID থাকে)
-          int targetIndex = list.indexWhere((video) => video.url.contains(targetPostId));
+          int targetIndex =
+              list.indexWhere((video) => video.url.contains(targetPostId));
 
           if (targetIndex != -1) {
             // ৩. ভিডিওটি পেলে সেটিকে লিস্ট থেকে বের করে একদম শুরুতে বসানো
@@ -186,20 +200,20 @@ class _ReelScreensState extends State<ReelScreens> {
             child: _isLoading
                 ? _buildShimmerLoading()
                 : ListView.builder(
-              cacheExtent: kIsWeb ? 800 : 1500,
-              itemCount: _allVideos.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: FacebookVideoCard(
-                    // Key ব্যবহার করা জরুরি যাতে লিস্ট রিঅর্ডার হলে UI আপডেট হয়
-                    key: ValueKey(_allVideos[index].url),
-                    videoData: _allVideos[index],
-                    allVideosList: _allVideos.map((e) => e.url).toList(),
+                    cacheExtent: kIsWeb ? 800 : 1500,
+                    itemCount: _allVideos.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: FacebookVideoCard(
+                          // Key ব্যবহার করা জরুরি যাতে লিস্ট রিঅর্ডার হলে UI আপডেট হয়
+                          key: ValueKey(_allVideos[index].url),
+                          videoData: _allVideos[index],
+                          allVideosList: _allVideos.map((e) => e.url).toList(),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ),
       ),
@@ -224,7 +238,7 @@ class _ReelScreensState extends State<ReelScreens> {
       actions: [
         _circleButton(Icons.search),
         _circleButton(Icons.chat_bubble),
-        if(kIsWeb) _circleButton(Icons.refresh, onTap: _onRefresh),
+        if (kIsWeb) _circleButton(Icons.refresh, onTap: _onRefresh),
         const SizedBox(width: 10),
       ],
     );
@@ -233,7 +247,8 @@ class _ReelScreensState extends State<ReelScreens> {
   Widget _circleButton(IconData icon, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
+      decoration:
+          BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
       child: IconButton(
         icon: Icon(icon, color: Colors.black, size: 22),
         onPressed: onTap ?? () {},
@@ -248,13 +263,17 @@ class _ReelScreensState extends State<ReelScreens> {
       itemBuilder: (_, __) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Container(
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(10)),
           child: Shimmer.fromColors(
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
             child: Column(
               children: [
-                Container(height: 60, margin: const EdgeInsets.all(10), color: Colors.white),
+                Container(
+                    height: 60,
+                    margin: const EdgeInsets.all(10),
+                    color: Colors.white),
                 Container(height: 350, color: Colors.white),
               ],
             ),
@@ -282,7 +301,8 @@ class FacebookVideoCard extends StatefulWidget {
   State<FacebookVideoCard> createState() => _FacebookVideoCardState();
 }
 
-class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProviderStateMixin {
+class _FacebookVideoCardState extends State<FacebookVideoCard>
+    with TickerProviderStateMixin {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
   bool _isPreviewing = false;
@@ -303,18 +323,21 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
     super.initState();
     _initializeVideo();
 
-    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+    _pulseController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+        CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
 
-    _heartAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _heartScale = Tween<double>(begin: 0.0, end: 1.2).animate(
-        CurvedAnimation(parent: _heartAnimationController, curve: Curves.elasticOut)
-    );
+    _heartAnimationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _heartScale = Tween<double>(begin: 0.0, end: 1.2).animate(CurvedAnimation(
+        parent: _heartAnimationController, curve: Curves.elasticOut));
 
     _heartAnimationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Future.delayed(const Duration(milliseconds: 500), () {
-          if(mounted) setState(() => _showHeart = false);
+          if (mounted) setState(() => _showHeart = false);
           _heartAnimationController.reset();
         });
       }
@@ -337,7 +360,9 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
   }
 
   void _previewTimeListener() {
-    if (_controller == null || !_controller!.value.isInitialized || _isNavigating) return;
+    if (_controller == null ||
+        !_controller!.value.isInitialized ||
+        _isNavigating) return;
 
     if (_controller!.value.isPlaying && _isPreviewing) {
       if (_controller!.value.position.inSeconds >= 7) {
@@ -366,14 +391,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
   // ✅ CLICK LOGIC: GO TO ADS
   void _openFullScreen() {
     _stopPreview();
-    if(mounted) setState(() => _isNavigating = true);
+    if (mounted) setState(() => _isNavigating = true);
 
     Get.to(() => AdWebViewScreen(
-      adLink: AdsterraConfigs.monetagHomeLink,
-      targetVideoUrl: widget.videoData.url,
-      allVideos: widget.allVideosList,
-    ))?.then((_) {
-      if(mounted) {
+          adLink: AdsterraConfigs.monetagHomeLink,
+          targetVideoUrl: widget.videoData.url,
+          allVideos: widget.allVideosList,
+        ))?.then((_) {
+      if (mounted) {
         setState(() => _isNavigating = false);
       }
     });
@@ -395,7 +420,8 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
       try {
         // ১. ভিডিও আইডি বের করা (URL থেকে)
         // ফরম্যাট: .../id/64005.mp4 -> 64005
-        String videoId = widget.videoData.url.split('/id/').last.split('.').first;
+        String videoId =
+            widget.videoData.url.split('/id/').last.split('.').first;
 
         // ২. ব্রাউজারের বর্তমান অরিজিন (যেমন: https://myapp.com)
         String appDomain = Uri.base.origin;
@@ -403,7 +429,6 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
 
         // ৩. ফাইনাল লিংক: https://myapp.com/?post_id=64005
         shareUrl = "$appDomain/?post_id=$videoId";
-
       } catch (e) {
         debugPrint("Error generating share link: $e");
         shareUrl = Uri.base.toString(); // Fallback
@@ -426,27 +451,39 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
   // --- REACTION UI HELPERS ---
 
   Widget _getReactionButtonIcon() {
-    if (!_isLiked) return Icon(Icons.thumb_up_alt_outlined, color: Colors.grey[700], size: 20);
+    if (!_isLiked)
+      return Icon(Icons.thumb_up_alt_outlined,
+          color: Colors.grey[700], size: 20);
 
     switch (_selectedReaction) {
-      case 'Love': return const Text('❤️', style: TextStyle(fontSize: 20));
-      case 'Haha': return const Text('😆', style: TextStyle(fontSize: 20));
-      case 'Wow':  return const Text('😮', style: TextStyle(fontSize: 20));
-      case 'Sad':  return const Text('😢', style: TextStyle(fontSize: 20));
-      case 'Angry':return const Text('😡', style: TextStyle(fontSize: 20));
-      default: return const Icon(Icons.thumb_up, color: Color(0xFF1877F2), size: 20);
+      case 'Love':
+        return const Text('❤️', style: TextStyle(fontSize: 20));
+      case 'Haha':
+        return const Text('😆', style: TextStyle(fontSize: 20));
+      case 'Wow':
+        return const Text('😮', style: TextStyle(fontSize: 20));
+      case 'Sad':
+        return const Text('😢', style: TextStyle(fontSize: 20));
+      case 'Angry':
+        return const Text('😡', style: TextStyle(fontSize: 20));
+      default:
+        return const Icon(Icons.thumb_up, color: Color(0xFF1877F2), size: 20);
     }
   }
 
   Color _getReactionTextColor() {
     if (!_isLiked) return Colors.grey[700]!;
     switch (_selectedReaction) {
-      case 'Love': return const Color(0xFFE0245E);
+      case 'Love':
+        return const Color(0xFFE0245E);
       case 'Haha':
       case 'Wow':
-      case 'Sad': return const Color(0xFFF7B125);
-      case 'Angry': return const Color(0xFFE4405F);
-      default: return const Color(0xFF1877F2);
+      case 'Sad':
+        return const Color(0xFFF7B125);
+      case 'Angry':
+        return const Color(0xFFE4405F);
+      default:
+        return const Color(0xFF1877F2);
     }
   }
 
@@ -463,19 +500,30 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
             color: Colors.white,
             borderRadius: BorderRadius.circular(50),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 5))
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5))
             ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildAnimatedReactionItem("Like", const Icon(Icons.thumb_up, color: Color(0xFF1877F2), size: 30)),
-              _buildAnimatedReactionItem("Love", const Text('❤️', style: TextStyle(fontSize: 30))),
-              _buildAnimatedReactionItem("Haha", const Text('😆', style: TextStyle(fontSize: 30))),
-              _buildAnimatedReactionItem("Wow", const Text('😮', style: TextStyle(fontSize: 30))),
-              _buildAnimatedReactionItem("Sad", const Text('😢', style: TextStyle(fontSize: 30))),
-              _buildAnimatedReactionItem("Angry", const Text('😡', style: TextStyle(fontSize: 30))),
+              _buildAnimatedReactionItem(
+                  "Like",
+                  const Icon(Icons.thumb_up,
+                      color: Color(0xFF1877F2), size: 30)),
+              _buildAnimatedReactionItem(
+                  "Love", const Text('❤️', style: TextStyle(fontSize: 30))),
+              _buildAnimatedReactionItem(
+                  "Haha", const Text('😆', style: TextStyle(fontSize: 30))),
+              _buildAnimatedReactionItem(
+                  "Wow", const Text('😮', style: TextStyle(fontSize: 30))),
+              _buildAnimatedReactionItem(
+                  "Sad", const Text('😢', style: TextStyle(fontSize: 30))),
+              _buildAnimatedReactionItem(
+                  "Angry", const Text('😡', style: TextStyle(fontSize: 30))),
             ],
           ),
         ),
@@ -517,7 +565,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: kIsWeb ? BorderRadius.circular(12) : null,
-        boxShadow: kIsWeb ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4))] : null,
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4))
+              ]
+            : null,
       ),
       margin: EdgeInsets.only(bottom: kIsWeb ? 15 : 10),
       child: Column(
@@ -530,11 +585,15 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
               onTap: () {},
               child: Hero(
                 tag: video.url + video.channelName,
-                child: CircleAvatar(backgroundImage: NetworkImage(video.profileImage)),
+                child: CircleAvatar(
+                    backgroundImage: NetworkImage(video.profileImage)),
               ),
             ),
-            title: Text(video.channelName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            subtitle: Text("${video.timeAgo} · 🌎", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            title: Text(video.channelName,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            subtitle: Text("${video.timeAgo} · 🌎",
+                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             trailing: const Icon(Icons.more_horiz),
           ),
 
@@ -551,79 +610,102 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
             onLongPressEnd: (_) => _stopPreview(),
             onTap: _openFullScreen,
             onDoubleTap: _onDoubleTapLike,
-
             child: Container(
               width: double.infinity,
               color: Colors.black,
               child: _isInitialized
                   ? AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio > 1 ? _controller!.value.aspectRatio : 16/9,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    VideoPlayer(_controller!),
-
-                    Positioned(
-                      bottom: 0, left: 0, right: 0,
-                      child: Container(
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                      aspectRatio: _controller!.value.aspectRatio > 1
+                          ? _controller!.value.aspectRatio
+                          : 16 / 9,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          VideoPlayer(_controller!),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.7)
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-
-                    if (!_isPreviewing)
-                      ScaleTransition(
-                        scale: _pulseAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.6), width: 2)
+                          if (!_isPreviewing)
+                            ScaleTransition(
+                              scale: _pulseAnimation,
+                              child: Container(
+                                padding: const EdgeInsets.all(15),
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.6),
+                                        width: 2)),
+                                child: const Icon(Icons.play_arrow_rounded,
+                                    color: Colors.white, size: 45),
+                              ),
+                            ),
+                          if (_isPreviewing)
+                            Positioned(
+                              top: 10,
+                              right: 10,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                    color: Colors.redAccent.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(20)),
+                                child: const Text("Preview Mode",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          if (_showHeart)
+                            ScaleTransition(
+                              scale: _heartScale,
+                              child: const Icon(Icons.favorite,
+                                  color: Colors.white,
+                                  size: 100,
+                                  shadows: [
+                                    Shadow(
+                                        color: Colors.black54, blurRadius: 20)
+                                  ]),
+                            ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: VideoProgressIndicator(
+                              _controller!,
+                              allowScrubbing: false,
+                              colors: const VideoProgressColors(
+                                playedColor: Color(0xFF1877F2),
+                                bufferedColor: Colors.white24,
+                                backgroundColor: Colors.transparent,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
                           ),
-                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 45),
-                        ),
+                        ],
                       ),
-
-                    if (_isPreviewing)
-                      Positioned(
-                        top: 10, right: 10,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.9), borderRadius: BorderRadius.circular(20)),
-                          child: const Text("Preview Mode", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-
-                    if (_showHeart)
-                      ScaleTransition(
-                        scale: _heartScale,
-                        child: const Icon(Icons.favorite, color: Colors.white, size: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 20)]),
-                      ),
-
-                    Positioned(
-                      bottom: 0, left: 0, right: 0,
-                      child: VideoProgressIndicator(
-                        _controller!,
-                        allowScrubbing: false,
-                        colors: const VideoProgressColors(
-                          playedColor: Color(0xFF1877F2),
-                          bufferedColor: Colors.white24,
-                          backgroundColor: Colors.transparent,
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : const SizedBox(height: 350, child: Center(child: CircularProgressIndicator(color: Colors.white))),
+                    )
+                  : const SizedBox(
+                      height: 350,
+                      child: Center(
+                          child:
+                              CircularProgressIndicator(color: Colors.white))),
             ),
           ),
 
@@ -636,12 +718,11 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
                 Row(children: [
                   _getReactionButtonIcon(),
                   const SizedBox(width: 4),
-                  Text(
-                      !_isLiked ? "1.2K" : "You and 1.2K others",
-                      style: const TextStyle(color: Colors.grey, fontSize: 13)
-                  ),
+                  Text(!_isLiked ? "1.2K" : "You and 1.2K others",
+                      style: const TextStyle(color: Colors.grey, fontSize: 13)),
                 ]),
-                const Text("25 Comments  •  10 Shares", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const Text("25 Comments  •  10 Shares",
+                    style: TextStyle(fontSize: 13, color: Colors.grey)),
               ],
             ),
           ),
@@ -653,7 +734,6 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-
                 // 1. Like/Reaction
                 Expanded(
                   child: GestureDetector(
@@ -678,14 +758,11 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
                         children: [
                           _getReactionButtonIcon(),
                           const SizedBox(width: 6),
-                          Text(
-                              _selectedReaction,
+                          Text(_selectedReaction,
                               style: TextStyle(
                                   color: _getReactionTextColor(),
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 14
-                              )
-                          ),
+                                  fontSize: 14)),
                         ],
                       ),
                     ),
@@ -701,9 +778,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.mode_comment_outlined, color: Colors.grey[700], size: 22),
+                          Icon(Icons.mode_comment_outlined,
+                              color: Colors.grey[700], size: 22),
                           const SizedBox(width: 6),
-                          Text("Comment", style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 14)),
+                          Text("Comment",
+                              style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14)),
                         ],
                       ),
                     ),
@@ -719,9 +801,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.share_outlined, color: Colors.grey[700], size: 22),
+                          Icon(Icons.share_outlined,
+                              color: Colors.grey[700], size: 22),
                           const SizedBox(width: 6),
-                          Text("Share", style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 14)),
+                          Text("Share",
+                              style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14)),
                         ],
                       ),
                     ),
