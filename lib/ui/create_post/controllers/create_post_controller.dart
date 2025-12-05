@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +9,6 @@ import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
 import 'package:meetyarah/ui/home/controllers/get_post_controllers.dart';
 import 'package:meetyarah/ui/login_reg_screens/controllers/auth_controller.dart';
-// ✅ Basescreens ইমপোর্ট করা হলো
 import 'package:meetyarah/ui/home/screens/baseScreens.dart';
 
 class CreatePostController extends GetxController {
@@ -17,10 +17,9 @@ class CreatePostController extends GetxController {
 
   final AuthService _authService = Get.find<AuthService>();
 
-  Future<void> createPost({List<dynamic>? images}) async {
+  // images এখন List<XFile>
+  Future<void> createPost({List<XFile>? images}) async {
     final String content = postTitleCtrl.text.trim();
-
-    // ইউজার আইডি চেক
     final String? userId = _authService.userId;
 
     if (userId == null || userId.isEmpty) {
@@ -37,16 +36,14 @@ class CreatePostController extends GetxController {
       isLoading(true);
       String? imageUrl;
 
-      // ইমেজ আপলোড (যদি থাকে)
       if (images != null && images.isNotEmpty) {
-        imageUrl = await _uploadImage(File(images.first.path));
+        imageUrl = await _uploadImage(images.first);
         if (imageUrl == null) {
           isLoading(false);
           return;
         }
       }
 
-      // API কল
       var response = await http.post(
         Uri.parse(Urls.createPostApi),
         headers: {"Content-Type": "application/json"},
@@ -62,20 +59,13 @@ class CreatePostController extends GetxController {
       if (response.statusCode == 200 && data['status'] == 'success') {
         Get.snackbar("Success", "Post created successfully!");
         postTitleCtrl.clear();
-
-        // ✅ ১. হোম পেজের ডেটা রিফ্রেশ করা
         if (Get.isRegistered<GetPostController>()) {
           Get.find<GetPostController>().getAllPost();
         }
-
-        // ✅ ২. লোডিং বন্ধ করে সরাসরি Base Screen-এ নিয়ে যাওয়া
-        // Get.offAll() ব্যবহার করলে ব্যাক বাটন চাপলে আর ক্রিয়েট পোস্ট পেজে ফিরে আসবে না
         Get.offAll(() => const Basescreens());
-
       } else {
         Get.snackbar("Error", data['message'] ?? "Failed to create post");
       }
-
     } catch (e) {
       print("Create Post Error: $e");
       Get.snackbar("Error", "Something went wrong");
@@ -84,10 +74,19 @@ class CreatePostController extends GetxController {
     }
   }
 
-  Future<String?> _uploadImage(File file) async {
+  Future<String?> _uploadImage(XFile xfile) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(Urls.uploadImageApi));
-      request.files.add(await http.MultipartFile.fromPath('image', file.path));
+
+      if (kIsWeb) {
+        // ✅ ওয়েবের জন্য
+        var bytes = await xfile.readAsBytes();
+        request.files.add(http.MultipartFile.fromBytes('image', bytes, filename: xfile.name));
+      } else {
+        // ✅ মোবাইলের জন্য
+        request.files.add(await http.MultipartFile.fromPath('image', xfile.path));
+      }
+
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
