@@ -103,7 +103,7 @@ class VideoDataHelper {
 }
 
 // ==========================================
-// 3. REEL SCREENS
+// 3. REEL SCREENS (MAIN FEED UI)
 // ==========================================
 class ReelScreens extends StatefulWidget {
   const ReelScreens({super.key});
@@ -115,19 +115,10 @@ class _ReelScreensState extends State<ReelScreens> {
   List<VideoDataModel> _allVideos = [];
   bool _isLoading = true;
 
-  // Note: Autoplay logic is removed as per new requirement (Preview on Hold)
-  final ScrollController _scrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   void _loadData() async {
@@ -151,7 +142,7 @@ class _ReelScreensState extends State<ReelScreens> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
-      appBar: _buildResponsiveAppBar(),
+      appBar: _buildModernAppBar(),
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
@@ -161,10 +152,9 @@ class _ReelScreensState extends State<ReelScreens> {
             child: _isLoading
                 ? _buildShimmerLoading()
                 : ListView.builder(
-              controller: _scrollController,
-              itemCount: _allVideos.length,
-              physics: const AlwaysScrollableScrollPhysics(),
+              // physics: const AlwaysScrollableScrollPhysics(), // স্মুথ স্ক্রলিং
               cacheExtent: kIsWeb ? 800 : 1500,
+              itemCount: _allVideos.length,
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -182,23 +172,22 @@ class _ReelScreensState extends State<ReelScreens> {
     );
   }
 
-  AppBar _buildResponsiveAppBar() {
+  AppBar _buildModernAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
-      elevation: 1,
+      elevation: 0.5,
       centerTitle: false,
       titleSpacing: kIsWeb ? 20 : 0,
       title: const Text(
         "facebook",
-        style: TextStyle(color: Color(0xFF1877F2), fontWeight: FontWeight.bold, fontSize: 28, letterSpacing: -1.2),
+        style: TextStyle(
+          color: Color(0xFF1877F2),
+          fontWeight: FontWeight.bold,
+          fontSize: 28,
+          letterSpacing: -1.2,
+        ),
       ),
       actions: [
-        if (kIsWeb) ...[
-          _webNavIcon(Icons.home, true),
-          _webNavIcon(Icons.ondemand_video, false),
-          _webNavIcon(Icons.storefront, false),
-          const SizedBox(width: 20),
-        ],
         _circleButton(Icons.search),
         _circleButton(Icons.chat_bubble),
         if(kIsWeb) _circleButton(Icons.refresh, onTap: _onRefresh),
@@ -207,28 +196,14 @@ class _ReelScreensState extends State<ReelScreens> {
     );
   }
 
-  Widget _webNavIcon(IconData icon, bool isActive) {
-    return Container(
-      width: 80,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        border: isActive ? const Border(bottom: BorderSide(color: Color(0xFF1877F2), width: 3)) : null,
-      ),
-      child: Icon(icon, color: isActive ? const Color(0xFF1877F2) : Colors.grey[600], size: 28),
-    );
-  }
-
   Widget _circleButton(IconData icon, {VoidCallback? onTap}) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap ?? () {},
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
-          child: Icon(icon, color: Colors.black, size: 22),
-        ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.black, size: 22),
+        onPressed: onTap ?? () {},
+        splashRadius: 20,
       ),
     );
   }
@@ -246,7 +221,7 @@ class _ReelScreensState extends State<ReelScreens> {
             child: Column(
               children: [
                 Container(height: 60, margin: const EdgeInsets.all(10), color: Colors.white),
-                Container(height: 300, color: Colors.white),
+                Container(height: 350, color: Colors.white),
               ],
             ),
           ),
@@ -257,7 +232,7 @@ class _ReelScreensState extends State<ReelScreens> {
 }
 
 // ==========================================
-// 4. FACEBOOK VIDEO CARD (PREVIEW ON HOLD & CLICK TO PLAY)
+// 4. FACEBOOK VIDEO CARD (SMART PREVIEW & CLICK TO PLAY)
 // ==========================================
 class FacebookVideoCard extends StatefulWidget {
   final VideoDataModel videoData;
@@ -273,15 +248,44 @@ class FacebookVideoCard extends StatefulWidget {
   State<FacebookVideoCard> createState() => _FacebookVideoCardState();
 }
 
-class _FacebookVideoCardState extends State<FacebookVideoCard> {
+class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProviderStateMixin {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
-  bool _isPreviewing = false; // Track preview state
+  bool _isPreviewing = false;
+  bool _isNavigating = false; // To prevent double navigation
+
+  // Animations
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  // Heart Animation
+  late AnimationController _heartAnimationController;
+  late Animation<double> _heartScale;
+  bool _showHeart = false;
 
   @override
   void initState() {
     super.initState();
     _initializeVideo();
+
+    // Play Button Pulse
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+
+    // Heart Animation
+    _heartAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _heartScale = Tween<double>(begin: 0.0, end: 1.2).animate(
+        CurvedAnimation(parent: _heartAnimationController, curve: Curves.elasticOut)
+    );
+
+    _heartAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if(mounted) setState(() => _showHeart = false);
+          _heartAnimationController.reset();
+        });
+      }
+    });
   }
 
   void _initializeVideo() {
@@ -290,19 +294,32 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
       ..initialize().then((_) {
         if (mounted) {
           setState(() => _isInitialized = true);
-          // Auto-play বন্ধ রাখা হয়েছে, শুধুমাত্র Preview এর সময় চলবে
-          _controller?.setLooping(true);
           _controller?.setVolume(0); // Preview মিউট থাকবে (অপশনাল)
+          _controller?.addListener(_checkPreviewDuration);
         }
       }).catchError((e) {
         debugPrint("Video Error: $e");
       });
   }
 
-  // ✅ Step 1: Preview Logic (Long Press)
+  // ✅ 3. Auto Redirect Logic (7 Seconds)
+  void _checkPreviewDuration() {
+    if (_controller == null || !_controller!.value.isInitialized || _isNavigating) return;
+
+    if (_controller!.value.isPlaying && _isPreviewing) {
+      // যদি ৭ সেকেন্ডের বেশি হয়
+      if (_controller!.value.position.inSeconds >= 7) {
+        _isNavigating = true;
+        _stopPreview(); // পজ করা
+        _openFullScreen(); // ফুল স্ক্রিনে পাঠানো
+      }
+    }
+  }
+
+  // ✅ 2. Hold to Preview Logic
   void _startPreview() {
     if (_controller != null && _isInitialized) {
-      HapticFeedback.lightImpact(); // হালকা ভাইব্রেশন
+      HapticFeedback.selectionClick();
       setState(() => _isPreviewing = true);
       _controller?.play();
     }
@@ -315,21 +332,35 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
     }
   }
 
-  // ✅ Step 2: Full Screen Logic (Tap)
+  // ✅ 1. Tap to Play Logic
   void _openFullScreen() {
-    // প্রিভিউ বন্ধ করে নতুন পেজে যাওয়া
-    _stopPreview();
+    _stopPreview(); // নিশ্চিত করা যে প্রিভিউ বন্ধ আছে
+    if(mounted) setState(() => _isNavigating = true);
 
     Get.to(() => AdWebViewScreen(
       adLink: AdsterraConfigs.monetagHomeLink,
       targetVideoUrl: widget.videoData.url,
       allVideos: widget.allVideosList,
-    ));
+    ))?.then((_) {
+      if(mounted) {
+        setState(() => _isNavigating = false);
+        // ফিরে আসলে ভিডিও প্রথম থেকে শুরু হবে না, পজ থাকবে
+      }
+    });
+  }
+
+  void _onDoubleTapLike() {
+    setState(() => _showHeart = true);
+    _heartAnimationController.forward();
+    HapticFeedback.mediumImpact();
   }
 
   @override
   void dispose() {
+    _controller?.removeListener(_checkPreviewDuration);
     _controller?.dispose();
+    _pulseController.dispose();
+    _heartAnimationController.dispose();
     super.dispose();
   }
 
@@ -340,19 +371,22 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: kIsWeb ? BorderRadius.circular(8) : null,
+        borderRadius: kIsWeb ? BorderRadius.circular(12) : null,
         boxShadow: kIsWeb ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4))] : null,
       ),
       margin: EdgeInsets.only(bottom: kIsWeb ? 15 : 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header with Hero
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: InkWell(
               onTap: () => Get.to(() => ProfileViewScreen(userData: video)),
-              child: CircleAvatar(backgroundImage: NetworkImage(video.profileImage)),
+              child: Hero(
+                tag: video.url + video.channelName,
+                child: CircleAvatar(backgroundImage: NetworkImage(video.profileImage)),
+              ),
             ),
             title: InkWell(
               onTap: () => Get.to(() => ProfileViewScreen(userData: video)),
@@ -371,12 +405,10 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
 
           // ✅ INTERACTIVE VIDEO AREA
           GestureDetector(
-            // ১. চেপে ধরলে প্রিভিউ দেখাবে
-            onLongPressStart: (_) => _startPreview(),
+            onLongPressStart: (_) => _startPreview(), // 2. Hold to Preview
             onLongPressEnd: (_) => _stopPreview(),
-
-            // ২. ক্লিক করলে নতুন পেজে প্লে হবে
-            onTap: _openFullScreen,
+            onTap: _openFullScreen, // 1. Click to Play (Full Screen)
+            onDoubleTap: _onDoubleTapLike,
 
             child: Container(
               width: double.infinity,
@@ -389,31 +421,79 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
                   children: [
                     VideoPlayer(_controller!),
 
-                    // Preview Indicator / Play Icon
+                    // Cinema Gradient
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      child: Container(
+                        height: 80,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Play Button Visual (Pulsing) - Only show when NOT previewing
                     if (!_isPreviewing)
-                      Container(
-                        color: Colors.black12, // সামান্য ডার্ক ওভারলে যখন পজ থাকে
-                        child: const Center(
-                          child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 60),
+                      ScaleTransition(
+                        scale: _pulseAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withOpacity(0.6), width: 2)
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 45),
                         ),
                       ),
 
-                    // "Hold to Preview" Hint (Optional)
-                    if (!_isPreviewing)
+                    // Preview Indicator (When Holding)
+                    if (_isPreviewing)
                       Positioned(
-                        bottom: 10,
+                        top: 10,
+                        right: 10,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.black54,
+                            color: Colors.redAccent.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            "Hold to Preview • Tap to Watch",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.remove_red_eye, color: Colors.white, size: 14),
+                              SizedBox(width: 5),
+                              Text("Preview Mode", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
                           ),
                         ),
                       ),
+
+                    // Heart Animation
+                    if (_showHeart)
+                      ScaleTransition(
+                        scale: _heartScale,
+                        child: const Icon(Icons.favorite, color: Colors.white, size: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 20)]),
+                      ),
+
+                    // Progress Bar (Always visible)
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      child: VideoProgressIndicator(
+                        _controller!,
+                        allowScrubbing: false, // Preview তে স্ক্রাব করা যাবে না
+                        colors: const VideoProgressColors(
+                          playedColor: Color(0xFF1877F2),
+                          bufferedColor: Colors.white24,
+                          backgroundColor: Colors.transparent,
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -440,15 +520,15 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(children: [
-                Icon(Icons.thumb_up, size: 14, color: Color(0xFF1877F2)),
+                Icon(Icons.thumb_up, size: 16, color: Color(0xFF1877F2)),
                 SizedBox(width: 4),
-                Text("1.2K"),
+                Text("1.2K", style: TextStyle(color: Colors.grey, fontSize: 13)),
               ]),
-              Text("25 Comments  •  10 Shares", style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text("25 Comments  •  10 Shares", style: TextStyle(fontSize: 13, color: Colors.grey)),
             ],
           ),
         ),
-        const Divider(height: 0, thickness: 1),
+        const Divider(height: 0, thickness: 0.5),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
@@ -467,13 +547,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> {
   Widget _actionBtn(IconData icon, String label) {
     return Expanded(
       child: InkWell(
-        onTap: () {},
+        onTap: () { HapticFeedback.lightImpact(); },
+        borderRadius: BorderRadius.circular(5),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.grey[700], size: 20),
+              Icon(icon, color: Colors.grey[700], size: 22),
               const SizedBox(width: 6),
               Text(label, style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 14)),
             ],
