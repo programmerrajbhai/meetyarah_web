@@ -108,7 +108,7 @@ class _MyAppState extends State<MyApp> {
       ),
 
       // প্রথমে স্প্ল্যাশ স্ক্রিন বা রিলস স্ক্রিন দেখাবে
-      home: const ReelScreens(),
+      home: Basescreens(),
     );
   }
 }
