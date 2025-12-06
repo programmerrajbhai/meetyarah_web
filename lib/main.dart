@@ -107,7 +107,7 @@ class _MyAppState extends State<MyApp> {
         // ফন্ট ফ্যামিলি বা অন্যান্য থিম সেটিংস এখানে দিতে পারেন
       ),
 
-      home: ReelScreens(),
+      home: Basescreens(),
     );
   }
 }
