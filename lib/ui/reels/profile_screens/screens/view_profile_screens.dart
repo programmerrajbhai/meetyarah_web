@@ -1,23 +1,39 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../screens/reel_screens.dart';
-
+// import '../../screens/reel_screens.dart'; // ⚠️ Ensure this path is correct, otherwise use the Model below.
 
 // -----------------------------------------------------------------------------
-// 🎨 APP THEME
+// 🎨 APP THEME & CONSTANTS
 // -----------------------------------------------------------------------------
 class AppColors {
-  static const Color brand = Color(0xFF1877F2); // Facebook Blue Style
+  static const Color brand = Color(0xFF00AFF0);
   static const Color textDark = Color(0xFF242529);
   static const Color textGrey = Color(0xFF8A96A3);
-  static const Color bgLight = Color(0xFFF0F2F5);
+  static const Color bgLight = Color(0xFFF8F9FA);
   static const Color success = Colors.green;
 }
 
+class AppStyles {
+  static const TextStyle header = TextStyle(
+      fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.textDark, letterSpacing: -0.5
+  );
+  static const TextStyle subHeader = TextStyle(
+      color: AppColors.textGrey, fontSize: 15, fontWeight: FontWeight.w500
+  );
+  static const TextStyle body = TextStyle(
+      fontSize: 15, height: 1.5, color: Color(0xFF424242)
+  );
+  static const TextStyle sectionTitle = TextStyle(
+      fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textGrey, letterSpacing: 1.0
+  );
+}
+
 // -----------------------------------------------------------------------------
-// 📱 MAIN PROFILE SCREEN
+// 📱 MAIN SCREEN
 // -----------------------------------------------------------------------------
 class ProfileViewScreen extends StatefulWidget {
   final VideoDataModel userData;
@@ -28,19 +44,25 @@ class ProfileViewScreen extends StatefulWidget {
 }
 
 class _ProfileViewScreenState extends State<ProfileViewScreen> {
-  // কন্ট্রোলারকে ট্যাগ দিয়ে ইউনিক করা হয়েছে যাতে এক প্রোফাইলের ডাটা অন্য প্রোফাইলে না যায়
-  late final ProfileController controller;
+  // ✅ FIX: Using lazyPut or ensuring controller stays alive.
+  // For stateful widget, simple put is fine, but we handle dispose to be clean.
+  final ProfileController controller = Get.put(ProfileController());
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    controller = Get.put(ProfileController(), tag: widget.userData.url);
-
-    // লোডিং সিমুলেশন (যেন মনে হয় সার্ভার থেকে ডাটা আসছে)
-    Future.delayed(const Duration(milliseconds: 600), () {
+    // Simulate API Delay
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _isLoading = false);
     });
+  }
+
+  @override
+  void dispose() {
+    // ✅ OPTIONAL: Delete controller when leaving screen to free memory
+    // Get.delete<ProfileController>();
+    super.dispose();
   }
 
   @override
@@ -85,14 +107,14 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 isLoading: _isLoading,
                 isPremium: false,
                 price: user.contactPrice,
-                controller: controller,
+                controller: controller, // ✅ FIX: Passing controller directly
               ),
               _ContentGrid(
                 images: user.premiumContentImages,
                 isLoading: _isLoading,
                 isPremium: true,
                 price: user.contactPrice,
-                controller: controller,
+                controller: controller, // ✅ FIX: Passing controller directly
               ),
             ],
           ),
@@ -114,8 +136,10 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
         onPressed: () => Get.back(),
       ),
-      title: const Text("Profile", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
-      centerTitle: true,
+      actions: [
+        IconButton(icon: const Icon(Icons.more_horiz_rounded), onPressed: () {}),
+        const SizedBox(width: 8),
+      ],
     );
   }
 
@@ -124,12 +148,12 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       pinned: true,
       delegate: _SliverAppBarDelegate(
         const TabBar(
-          labelColor: AppColors.brand,
+          labelColor: AppColors.textDark,
           unselectedLabelColor: AppColors.textGrey,
           indicatorColor: AppColors.brand,
           indicatorWeight: 3,
           indicatorSize: TabBarIndicatorSize.label,
-          labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
           tabs: [
             Tab(text: "POSTS"),
             Tab(text: "PREMIUM 💎"),
@@ -141,7 +165,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 }
 
 // -----------------------------------------------------------------------------
-// 🧩 WIDGETS
+// 🧩 REUSABLE WIDGETS
 // -----------------------------------------------------------------------------
 
 class _ProfileHeader extends StatelessWidget {
@@ -155,55 +179,57 @@ class _ProfileHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Avatar & Actions Row
         Row(
           children: [
-            // Profile Pic with Hero Animation
-            Hero(
-              tag: user.url + user.channelName,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundImage: NetworkImage(user.profileImage),
-                  backgroundColor: Colors.grey[200],
-                ),
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundImage: NetworkImage(user.profileImage),
+                backgroundColor: Colors.grey[200],
               ),
             ),
             const Spacer(),
             _CircleBtn(icon: Icons.mail_outline, onTap: () => controller.tryPaidContact(user.contactPrice, user.channelName)),
             const SizedBox(width: 10),
-            _CircleBtn(icon: Icons.share_outlined, onTap: () => Get.snackbar("Share", "Sharing profile link...")),
+            _CircleBtn(icon: Icons.share_outlined, onTap: () => Get.snackbar("Share", "Sharing...")),
             const SizedBox(width: 10),
             _CircleBtn(icon: Icons.star_border, onTap: () => Get.snackbar("Liked", "Added to favorites")),
           ],
         ),
-        const SizedBox(height: 15),
+
+        const SizedBox(height: 20),
 
         // Name & Verification
         Row(
           children: [
             Flexible(
-              child: Text(user.channelName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(user.channelName, style: AppStyles.header, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             if (user.isVerified) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.verified, color: AppColors.brand, size: 22),
+              const Icon(Icons.verified, color: AppColors.brand, size: 24),
             ],
           ],
         ),
-        Text("@${user.channelName.replaceAll(' ', '').toLowerCase()}", style: const TextStyle(color: AppColors.textGrey, fontSize: 14)),
 
+        // Handle
+        Text("@${user.channelName.replaceAll(' ', '').toLowerCase()}", style: AppStyles.subHeader),
         const SizedBox(height: 15),
-        Text(user.bio, style: const TextStyle(fontSize: 14, height: 1.4, color: Colors.black87)),
 
+        // Bio
+        Text(user.bio, style: AppStyles.body),
         const SizedBox(height: 20),
-        const Text("ABOUT ME & SERVICES", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textGrey, letterSpacing: 1.0)),
-        const SizedBox(height: 5),
-        Text(user.serviceOverview, style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+
+        // Services
+        const Text("ABOUT ME & SERVICES", style: AppStyles.sectionTitle),
+        const SizedBox(height: 8),
+        Text(user.serviceOverview, style: AppStyles.body.copyWith(color: Colors.grey[700])),
       ],
     );
   }
@@ -218,7 +244,7 @@ class _StatsRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 15),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         color: AppColors.bgLight,
       ),
       child: Row(
@@ -228,7 +254,7 @@ class _StatsRow extends StatelessWidget {
           Container(height: 20, width: 1, color: Colors.grey.shade300),
           _buildItem(user.subscribers, "FANS"),
           Container(height: 20, width: 1, color: Colors.grey.shade300),
-          _buildItem(user.premiumSubscribers, "VIP"),
+          _buildItem(user.premiumSubscribers, "PREMIUM"),
         ],
       ),
     );
@@ -237,7 +263,7 @@ class _StatsRow extends StatelessWidget {
   Widget _buildItem(String count, String label) {
     return Column(
       children: [
-        Text(count, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black)),
+        Text(count, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
         const SizedBox(height: 2),
         Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 10, fontWeight: FontWeight.bold)),
       ],
@@ -255,12 +281,13 @@ class _SubscriptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isVip ? AppColors.success.withOpacity(0.08) : Colors.blue.withOpacity(0.05),
+        color: isVip ? AppColors.success.withOpacity(0.06) : const Color(0xFFF2F9FE),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: isVip ? AppColors.success.withOpacity(0.3) : AppColors.brand.withOpacity(0.2)
+            color: isVip ? AppColors.success.withOpacity(0.5) : AppColors.brand.withOpacity(0.3)
         ),
       ),
       child: Column(
@@ -268,27 +295,28 @@ class _SubscriptionCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(isVip ? Icons.check_circle : Icons.lock, color: isVip ? AppColors.success : AppColors.brand, size: 18),
-              const SizedBox(width: 8),
+              Icon(isVip ? Icons.check_circle : Icons.lock, color: isVip ? AppColors.success : AppColors.brand, size: 16),
+              const SizedBox(width: 6),
               Text(
-                isVip ? "PREMIUM MEMBER" : "UNLOCK EXCLUSIVE CONTENT",
-                style: TextStyle(fontWeight: FontWeight.bold, color: isVip ? AppColors.success : AppColors.brand, fontSize: 13),
+                isVip ? "PREMIUM MEMBER" : "UNLOCK EXCLUSIVE ACCESS",
+                style: TextStyle(fontWeight: FontWeight.bold, color: isVip ? AppColors.success : AppColors.brand, fontSize: 12, letterSpacing: 0.5),
               ),
             ],
           ),
           const SizedBox(height: 12),
           SizedBox(
-            width: double.infinity, height: 45,
+            width: double.infinity, height: 48,
             child: ElevatedButton(
               onPressed: isVip ? null : onTap,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brand,
-                elevation: 0,
+                elevation: isVip ? 0 : 2,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                disabledBackgroundColor: Colors.transparent,
               ),
               child: Text(
-                isVip ? "MEMBER ACTIVE" : "SUBSCRIBE $price / MO",
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                isVip ? "YOU ARE A MEMBER ✅" : "SUBSCRIBE FOR $price",
+                style: TextStyle(color: isVip ? AppColors.success : Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
               ),
             ),
           ),
@@ -317,62 +345,56 @@ class _ContentGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isLoading) {
       return GridView.builder(
-        padding: const EdgeInsets.only(top: 2),
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 9,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 2, mainAxisSpacing: 2, childAspectRatio: 0.8),
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(), // Loading shouldn't scroll
+        itemCount: 6,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.8),
         itemBuilder: (_, __) => Shimmer.fromColors(
           baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!,
-          child: Container(color: Colors.white),
+          child: Container(margin: const EdgeInsets.all(1), color: Colors.white),
         ),
       );
     }
 
     if (images.isEmpty) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(20.0),
-        child: Text("No posts available yet.", style: TextStyle(color: Colors.grey)),
-      ));
+      return Center(child: Text("No posts available", style: TextStyle(color: Colors.grey[400])));
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.only(top: 2),
+      padding: EdgeInsets.zero,
+      // ✅ FIX: Bouncing Physics ensures smooth scrolling inside NestedScrollView
       physics: const BouncingScrollPhysics(),
       itemCount: images.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 2, mainAxisSpacing: 2, childAspectRatio: 0.75),
       itemBuilder: (context, index) {
         return Obx(() {
           bool isLocked = isPremium && !controller.isVip.value;
-          return GestureDetector(
-            onTap: () {
-              if (isLocked) {
-                Get.snackbar("Premium Only 💎", "Subscribe for $price to view this content.", backgroundColor: Colors.black87, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(20));
-              } else {
-                _showFullImage(context, images[index]);
-              }
-            },
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(images[index], fit: BoxFit.cover, errorBuilder: (_,__,___)=> Container(color: Colors.grey[200], child: const Icon(Icons.error, color: Colors.grey))),
-                if (isLocked) Container(
-                  color: Colors.black.withOpacity(0.6),
-                  child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white, size: 30)),
-                ),
-              ],
+          return Material( // ✅ FIX: Added Material for Ripple Effect
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (isLocked) {
+                  Get.snackbar("LOCKED 🔒", "Subscribe for $price to see this.", backgroundColor: Colors.black, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(20));
+                } else {
+                  Get.to(() => Scaffold(
+                    backgroundColor: Colors.black,
+                    appBar: AppBar(backgroundColor: Colors.transparent, iconTheme: const IconThemeData(color: Colors.white)),
+                    body: Center(child: Image.network(images[index])),
+                  ));
+                }
+              },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(images[index], fit: BoxFit.cover, errorBuilder: (_,__,___)=> Container(color: Colors.grey[200])),
+                  if (isLocked) Container(color: Colors.black.withOpacity(0.5), child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white, size: 28))),
+                ],
+              ),
             ),
           );
         });
       },
     );
-  }
-
-  void _showFullImage(BuildContext context, String url) {
-    Get.to(() => Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.transparent, iconTheme: const IconThemeData(color: Colors.white)),
-      body: Center(child: Image.network(url)),
-    ));
   }
 }
 
@@ -387,32 +409,33 @@ class _CircleBtn extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: Container(
-        width: 40, height: 40,
+        width: 45, height: 45,
         decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-        child: Icon(icon, color: Colors.black87, size: 20),
+        child: Icon(icon, color: Colors.black87, size: 22),
       ),
     );
   }
 }
 
 // -----------------------------------------------------------------------------
-// 🧠 CONTROLLER
+// 🧠 CONTROLLER & UTILS
 // -----------------------------------------------------------------------------
+
 class ProfileController extends GetxController {
   var isVip = false.obs;
 
   void unlockContent() {
     isVip.value = true;
-    Get.snackbar("Subscribed! 🎉", "You now have full access.", backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(20));
+    Get.snackbar("SUCCESS", "Welcome to the VIP Club! 👑", backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(16));
   }
 
   void tryPaidContact(String price, String name) {
     if (isVip.value) {
-      Get.snackbar("Chat", "Opening chat with $name...", backgroundColor: AppColors.brand, colorText: Colors.white);
+      Get.snackbar("Chat", "Opening chat...", backgroundColor: AppColors.brand, colorText: Colors.white);
     } else {
       Get.defaultDialog(
-        title: "Paid Service",
-        middleText: "Pay $price to chat personally with $name.",
+        title: "Paid Contact 💲",
+        middleText: "Pay $price to chat with $name.",
         textConfirm: "PAY NOW",
         confirmTextColor: Colors.white,
         buttonColor: AppColors.brand,
@@ -431,7 +454,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => Container(
-    decoration: BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+    decoration: BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
     child: _tabBar,
   );
   @override
