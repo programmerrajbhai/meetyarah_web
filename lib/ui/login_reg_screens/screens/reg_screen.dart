@@ -55,7 +55,7 @@ class _RegistrationScreensState extends State<RegistrationScreens> {
               SizedBox(height: 8),
               textfromfield(
                 icon: Icons.lock,
-                text: 'Password',
+                text: 'f1q aPassword',
                 controller: _regcontroller.passwordCtrl,
               ),
               SizedBox(height: 8),

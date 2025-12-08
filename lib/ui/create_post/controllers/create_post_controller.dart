@@ -8,8 +8,10 @@ import 'package:http/http.dart' as http;
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
 import 'package:meetyarah/ui/home/controllers/get_post_controllers.dart';
-import 'package:meetyarah/ui/login_reg_screens/controllers/auth_controller.dart';
+
 import 'package:meetyarah/ui/home/screens/baseScreens.dart';
+
+import '../../login_reg_screens/controllers/auth_service.dart';
 
 class CreatePostController extends GetxController {
   final TextEditingController postTitleCtrl = TextEditingController();

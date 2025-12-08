@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:meetyarah/ui/profile/screens/profile_screens.dart';
-
-import '../../login_reg_screens/controllers/auth_controller.dart';
+import '../../login_reg_screens/controllers/auth_service.dart';
 import '../../profile/controllers/profile_controllers.dart';
 
 class MenuScreen extends StatelessWidget {

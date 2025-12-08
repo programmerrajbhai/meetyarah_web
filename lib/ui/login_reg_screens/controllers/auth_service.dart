@@ -48,4 +48,6 @@ class AuthService extends GetxService {
   }
 
   bool get isLoggedIn => token.value.isNotEmpty;
+// ✅ এই Getter টি অ্যাড করুন
+  String? get userId => user.value?.user_id;
 }

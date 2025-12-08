@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
 import 'package:meetyarah/ui/home/models/get_post_model.dart';
-import 'package:meetyarah/ui/login_reg_screens/controllers/auth_controller.dart';
+import '../../login_reg_screens/controllers/auth_service.dart';
 
 class GetPostController extends GetxController {
   var posts = <GetPostModel>[].obs;

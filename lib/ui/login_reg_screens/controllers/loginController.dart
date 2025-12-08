@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/ui/home/screens/baseScreens.dart';
 import '../../../data/utils/urls.dart';
-import 'auth_controller.dart';
+import 'auth_service.dart';
 
 class LoginController extends GetxController {
   final emailOrPhoneCtrl = TextEditingController();

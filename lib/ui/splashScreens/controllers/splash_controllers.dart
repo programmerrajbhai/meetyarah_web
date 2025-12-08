@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:meetyarah/ui/home/screens/baseScreens.dart';
 import 'package:meetyarah/ui/login_reg_screens/screens/login_screen.dart';
 
-import '../../login_reg_screens/controllers/auth_controller.dart';
+import '../../login_reg_screens/controllers/auth_service.dart';
 
 class SplashController extends GetxController {
   // AuthService কে খুঁজে বের করছি

@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import '../../../data/utils/urls.dart';
 import '../../home/controllers/get_post_controllers.dart';
-import '../../login_reg_screens/controllers/auth_controller.dart';
+
+import '../../login_reg_screens/controllers/auth_service.dart';
 import '../../view_post/models/comments_model.dart';
 
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
-import 'package:meetyarah/ui/login_reg_screens/controllers/auth_controller.dart';
+import '../../login_reg_screens/controllers/auth_service.dart';
 import 'get_post_controllers.dart';
 
 class LikeController extends GetxController {

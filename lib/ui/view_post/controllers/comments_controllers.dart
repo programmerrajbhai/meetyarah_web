@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import '../../../data/utils/urls.dart';
-import '../../home/controllers/get_post_controllers.dart';
-// সঠিক ফাইলটি ইমপোর্ট করুন যেখানে AuthService আছে
-import '../../login_reg_screens/controllers/auth_controller.dart';
+import '../../login_reg_screens/controllers/auth_service.dart';
 import '../models/comments_model.dart';
 
 class CommentController extends GetxController {

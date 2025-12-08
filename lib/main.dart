@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:app_links/app_links.dart';
+import 'package:meetyarah/ui/home/screens/baseScreens.dart';
+import 'package:meetyarah/ui/login_reg_screens/screens/login_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // ❌ ভুল: সরাসরি ওয়েব প্যাকেজ ইমপোর্ট করবেন না
@@ -16,8 +18,7 @@ if (dart.library.html) 'package:meetyarah/web_config/web_config.dart';
 import 'package:meetyarah/ui/reels/screens/reel_screens.dart';
 import 'package:meetyarah/ui/splashScreens/screens/splash_screens.dart';
 import 'package:meetyarah/ui/home/models/get_post_model.dart';
-import 'package:meetyarah/ui/home/screens/baseScreens.dart';
-import 'package:meetyarah/ui/login_reg_screens/controllers/auth_controller.dart' hide AuthService;
+
 import 'package:meetyarah/ui/login_reg_screens/controllers/auth_service.dart';
 import 'package:meetyarah/ui/view_post/screens/post_details.dart';
 
