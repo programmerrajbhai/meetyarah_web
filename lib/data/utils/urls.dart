@@ -1,6 +1,6 @@
 class Urls {
   // আপনার পিসির আইপি
-  static const String _rootUrl = "http://192.168.1.102/api";
+  static const String _rootUrl = "https://laraabook.com/api";
 
   static String loginApi = "$_rootUrl/login.php";
   static String registerApi = "$_rootUrl/register.php";

@@ -53,18 +53,18 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   void _showAdBlockAlert() {
-    // AdBlock alert dialog implementation
+    // AdBlock alert dialog logic...
   }
 
-  // ✅ Common Helper: Dismiss Sheet & Show Snackbar
+  // ✅ CENTRAL HELPER: Dismiss Sheet & Show Snackbar automatically
   void _handleAction({required String message, VoidCallback? action}) {
-    // 1. Dismiss BottomSheet if open
+    // 1. Dismiss BottomSheet immediately if open
     if (Get.isBottomSheetOpen ?? false) Get.back();
 
-    // 2. Execute Action (Optional)
+    // 2. Execute the logic (Copy/Share/Save etc.)
     if (action != null) action();
 
-    // 3. Show Snackbar
+    // 3. Show Visual Feedback (SnackBar)
     Get.snackbar(
       "Success",
       message,
@@ -73,24 +73,23 @@ class _FeedScreenState extends State<FeedScreen> {
       colorText: Colors.white,
       margin: const EdgeInsets.all(20),
       borderRadius: 20,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(seconds: 2),
       animationDuration: const Duration(milliseconds: 300),
       icon: const Icon(Icons.check_circle, color: Colors.greenAccent),
     );
   }
 
-  // ✅ Link Generate Helper
+  // Link Generator
   String _getPostLink(String postId) {
     return "https://meetyarah.com/post/$postId";
   }
 
-  // ✅ Copy Link Logic
+  // Copy Link Logic
   void _copyPostLink(String postId) {
     Clipboard.setData(ClipboardData(text: _getPostLink(postId)));
-    _handleAction(message: "Link copied to clipboard! 📋");
   }
 
-  // ✅ Advanced Share Menu
+  // ✅ Advanced Share Menu (Updated)
   void _showShareOptions(BuildContext context, dynamic post) {
     showModalBottomSheet(
       context: context,
@@ -113,13 +112,19 @@ class _FeedScreenState extends State<FeedScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 // 1. Copy Link
-                _shareOptionItem(Icons.copy, "Copy Link", Colors.blue, () => _copyPostLink(post.post_id ?? "0")),
+                _shareOptionItem(Icons.copy, "Copy Link", Colors.blue, () {
+                  _handleAction(
+                    message: "Link copied to clipboard! 📋",
+                    action: () => _copyPostLink(post.post_id ?? "0"),
+                  );
+                }),
 
-                // 2. System Share
+                // 2. System Share (Social Media)
                 _shareOptionItem(Icons.share, "More Options", Colors.green, () {
-                  _handleAction(message: "Opening share options...", action: () {
-                    Share.share("Check out this post: ${_getPostLink(post.post_id ?? "0")}");
-                  });
+                  _handleAction(
+                    message: "Opening share options...",
+                    action: () => Share.share("Check out this post: ${_getPostLink(post.post_id ?? "0")}"),
+                  );
                 }),
 
                 // 3. Send in App
@@ -141,7 +146,7 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _shareOptionItem(IconData icon, String label, Color color, VoidCallback onTap) {
-    return _FeedbackButton(
+    return _FeedbackButton( // Shadow Effect Button
       onTap: onTap,
       child: Column(
         children: [
@@ -157,7 +162,7 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  // ✅ Three-Dot Menu Options
+  // ✅ Three-Dot Menu Options (Updated)
   void _showPostOptions(BuildContext context, dynamic post) {
     showModalBottomSheet(
       context: context,
@@ -180,7 +185,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
             const Divider(),
 
-            _buildOptionTile(Icons.copy, "Copy Link", "Copy post url to clipboard.", () => _copyPostLink(post.post_id ?? "0")),
+            _buildOptionTile(Icons.copy, "Copy Link", "Copy post url to clipboard.", () {
+              _handleAction(
+                message: "Link copied! 🔗",
+                action: () => _copyPostLink(post.post_id ?? "0"),
+              );
+            }),
 
             _buildOptionTile(Icons.report_gmailerrorred, "Report Post", "I'm concerned about this post.", () {
               _handleAction(message: "Report submitted. Thanks! 🛡️");
@@ -290,7 +300,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildCreatePostBox() {
     return Card(
-      margin: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+      margin: const EdgeInsets.fromLTRB(0, 8, 0, 8), // Web style edge-to-edge mostly
       elevation: 0.5,
       color: Colors.white,
       shape: kIsWeb ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)) : const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
@@ -399,25 +409,17 @@ class _FeedScreenState extends State<FeedScreen> {
 
                 const SizedBox(height: 8),
 
-                // ✅ FIXED IMAGE HEIGHT HERE
                 if (post.image_url != null && post.image_url!.isNotEmpty)
                   Hero(
                     tag: "post_image_${post.post_id}",
                     child: Container(
-                      height: 400, // 🔥 নির্দিষ্ট হাইট (Fixed Height)
+                      height: 400,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                      ),
+                      decoration: BoxDecoration(color: Colors.grey[200]),
                       child: Image.network(
                         post.image_url!,
-                        fit: BoxFit.cover, // 🔥 পুরো বক্স জুড়ে ইমেজ দেখাবে
-                        errorBuilder: (c, o, s) => Container(
-                          height: 400,
-                          color: Colors.grey[200],
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.broken_image, color: Colors.grey, size: 50),
-                        ),
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, o, s) => Container(height: 400, color: Colors.grey[200], alignment: Alignment.center, child: const Icon(Icons.broken_image, color: Colors.grey, size: 50)),
                       ),
                     ),
                   ),
@@ -450,7 +452,7 @@ class _FeedScreenState extends State<FeedScreen> {
               children: [
                 Expanded(child: _buildReactionButton(post, index)),
                 Expanded(child: _actionButton(icon: Icons.chat_bubble_outline, label: "Comment", onTap: () => Get.to(() => PostDetailPage(post: post)))),
-                Expanded(child: _actionButton(icon: Icons.share_outlined, label: "Share", onTap: () => _showShareOptions(context, post))), // Share Menu
+                Expanded(child: _actionButton(icon: Icons.share_outlined, label: "Share", onTap: () => _showShareOptions(context, post))),
               ],
             ),
           ),
@@ -463,12 +465,24 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildReactionButton(dynamic post, int index) {
     bool isLiked = post.isLiked;
+
     return _FeedbackButton(
       onTap: () {
-        setState(() { post.isLiked = !isLiked; });
+        setState(() {
+          post.isLiked = !isLiked;
+          if (isLiked) {
+            if (post.like_count > 0) post.like_count = post.like_count - 1;
+          } else {
+            post.like_count = post.like_count + 1;
+          }
+        });
         likeController.toggleLike(index);
       },
-      child: _actionButtonContent(isLiked ? Icons.thumb_up : Icons.thumb_up_off_alt, "Like", color: isLiked ? Colors.blue : Colors.grey[600]!),
+      child: _actionButtonContent(
+          isLiked ? Icons.thumb_up : Icons.thumb_up_off_alt,
+          "Like",
+          color: isLiked ? Colors.blue : Colors.grey[600]!
+      ),
     );
   }
 
@@ -522,6 +536,18 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildReactionIcon(IconData icon, Color color) {
     return Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: color, shape: BoxShape.circle), child: Icon(icon, size: 10, color: Colors.white));
+  }
+
+  String _formatTimeAgo(String? dateString) {
+    if (dateString == null) return "Just now";
+    try {
+      final diff = DateTime.now().difference(DateTime.parse(dateString));
+      if (diff.inDays > 0) return "${diff.inDays}d";
+      if (diff.inHours > 0) return "${diff.inHours}h";
+      return "Just now";
+    } catch (e) {
+      return "Just now";
+    }
   }
 
   Widget _buildShimmer() {
