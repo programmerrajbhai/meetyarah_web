@@ -18,16 +18,24 @@ class LikeController extends GetxController {
       return;
     }
 
-    // 1. Optimistic Update (আগে UI চেঞ্জ)
-    bool previousStatus = post.isLiked;
-    post.isLiked = !post.isLiked;
-    post.like_count = post.isLiked
-        ? (post.like_count + 1)
-        : (post.like_count - 1);
+    // --- 1. Optimistic Update (Instant UI Change) ---
+    bool previousStatus = post.isLiked; // Purono status save rakha
+    int previousCount = post.like_count ?? 0;
 
+    // Toggle Logic
+    post.isLiked = !post.isLiked;
+
+    // Count Update
+    if (post.isLiked) {
+      post.like_count = previousCount + 1;
+    } else {
+      post.like_count = (previousCount > 0) ? previousCount - 1 : 0;
+    }
+
+    // UI Refresh (Eta na dile color change hobe na)
     _postController.posts.refresh();
 
-    // 2. API Call
+    // --- 2. API Call (Background e) ---
     try {
       networkResponse response = await networkClient.postRequest(
         url: Urls.likePostApi,
@@ -38,28 +46,20 @@ class LikeController extends GetxController {
       );
 
       if (!response.isSuccess) {
-        // ফেইল হলে রিভার্ট করা
-        _revert(post, previousStatus);
-        Get.snackbar("Failed", "Could not like post. Check connection.");
+        // Jodi API fail kore, tahole ager obosthay fire jabe
+        _revert(post, previousStatus, previousCount);
+        Get.snackbar("Failed", "Connection error. Undo like.");
       }
     } catch (e) {
       print("Like Error: $e");
-      _revert(post, previousStatus);
-      // এখানে ইউজারকে CORS বা কানেকশন এরর এর ব্যাপারে সতর্ক করা হলো
-      Get.snackbar(
-          "Network Error",
-          "If you are on Web/Localhost, ensure the API allows CORS.",
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white
-      );
+      _revert(post, previousStatus, previousCount);
     }
   }
 
-  void _revert(var post, bool status) {
+  // Revert function jodi API fail kore
+  void _revert(var post, bool status, int count) {
     post.isLiked = status;
-    post.like_count = post.isLiked
-        ? (post.like_count + 1)
-        : (post.like_count - 1);
+    post.like_count = count;
     _postController.posts.refresh();
   }
 }
