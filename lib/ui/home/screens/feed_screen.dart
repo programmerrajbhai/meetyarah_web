@@ -54,23 +54,38 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  // ✅ 2. পোস্ট ক্লিক হ্যান্ডলার (৩ ক্লিক পরপর লিংক রান করবে)
   Future<void> _handlePostClick(dynamic post) async {
-    _clickCount++; // ক্লিক বাড়াচ্ছি
+    _clickCount++;
+
     print("Post Click Count: $_clickCount");
 
-    if (_clickCount % 3 == 0) {
-      // ৩, ৬, ৯... তম ক্লিকে ডাইরেক্ট লিংক রান করবে
-      final Uri url = Uri.parse(_directLinkUrl);
+    // ✅ Direct Link পোস্ট হলে
+    if (post.isDirectLink == true) {
+      if (post.directUrl != null && post.directUrl!.isNotEmpty) {
+        final Uri url = Uri.parse(post.directUrl!);
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          Get.snackbar("Error", "Could not launch link",
+              snackPosition: SnackPosition.BOTTOM);
+        }
+      }
 
-      // ডাইরেক্ট লিংক ওপেন করা
+      // তারপর Post Detail Page ওপেন করো
+      Get.to(() => PostDetailPage(post: post));
+      return;
+    }
+
+    // ✅ সাধারণ পোস্টে আগের নিয়মে প্রতি ৩ ক্লিক পর Direct Link Ads
+    if (_clickCount % 3 == 0) {
+      final Uri url = Uri.parse(_directLinkUrl);
       if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication); // ব্রাউজারে ওপেন হবে
+        await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
-        Get.snackbar("Error", "Could not launch link", snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar("Error", "Could not launch link",
+            snackPosition: SnackPosition.BOTTOM);
       }
     } else {
-      // অন্যথায় পোস্ট ডিটেইলসে যাবে
       Get.to(() => PostDetailPage(post: post));
     }
   }

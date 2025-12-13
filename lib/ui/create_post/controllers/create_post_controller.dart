@@ -14,8 +14,10 @@ class CreatePostController extends GetxController {
   final TextEditingController postTitleCtrl = TextEditingController();
 
   var isLoading = false.obs;
-  // ✅ নতুন ভেরিয়েবল
   var isDirectLink = false.obs;
+
+  // ✅ নতুন ভেরিয়েবল: hidden directUrl
+  String? directUrl;
 
   final AuthService _authService = Get.find<AuthService>();
 
@@ -46,6 +48,13 @@ class CreatePostController extends GetxController {
         }
       }
 
+      // ✅ যদি Direct Link অন থাকে, hidden URL সেট করো
+      if (isDirectLink.value) {
+        directUrl = "https://google.com";
+      } else {
+        directUrl = null;
+      }
+
       var response = await http.post(
         Uri.parse(Urls.createPostApi),
         headers: {"Content-Type": "application/json"},
@@ -53,8 +62,8 @@ class CreatePostController extends GetxController {
           "user_id": userId,
           "post_content": content,
           "image_url": imageUrl,
-          // ✅ API তে পাঠাচ্ছি
           "is_direct_link": isDirectLink.value ? 1 : 0,
+          "direct_url": directUrl, // ✅ নতুন ফিল্ড
         }),
       );
 
@@ -63,7 +72,8 @@ class CreatePostController extends GetxController {
       if (response.statusCode == 200 && data['status'] == 'success') {
         Get.snackbar("Success", "Post created successfully!");
         postTitleCtrl.clear();
-        isDirectLink.value = false; // রিসেট
+        isDirectLink.value = false;
+        directUrl = null;
 
         if (Get.isRegistered<GetPostController>()) {
           Get.find<GetPostController>().getAllPost();
