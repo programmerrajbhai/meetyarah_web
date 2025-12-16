@@ -10,12 +10,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../adsterra/controller/adsterra_controller.dart';
 import '../../../adsterra/widgets/simple_ad_widget.dart';
+import '../../reels/screens/reel_screens.dart';
 import '../controllers/get_post_controllers.dart';
 import '../controllers/like_controller.dart';
 import '../../view_post/screens/post_details.dart';
 import '../../create_post/screens/create_post.dart';
 import '../widgets/like_button.dart';
 import '../widgets/adblock_alert.dart';
+
+// ✅ আপনার রিল স্ক্রিনের পাথ অনুযায়ী এটি ইমপোর্ট করুন
+
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -33,11 +37,26 @@ class _FeedScreenState extends State<FeedScreen> {
   final String _directLinkUrl = "https://www.google.com";
   int _clickCount = 0;
 
+  // ✅ ভিডিও লিস্ট রাখার জন্য ভেরিয়েবল
+  List<VideoDataModel> _feedVideos = [];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAdBlocker();
+    });
+
+    // ✅ ভিডিওগুলো জেনারেট/লোড করা হচ্ছে
+    _loadFeedVideos();
+  }
+
+  // ✅ ভিডিও লোড ফাংশন
+  void _loadFeedVideos() {
+    // VideoDataHelper আপনার দেওয়া ReelScreens ফাইলে আছে বলে ধরে নেওয়া হলো
+    var videos = VideoDataHelper.generateAllVideos();
+    setState(() {
+      _feedVideos = videos;
     });
   }
 
@@ -100,7 +119,6 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-// 🕒 Helper: Time Ago Formatter
   String _formatTimeAgo(String? dateString) {
     if (dateString == null || dateString.isEmpty) return "Just now";
     try {
@@ -124,7 +142,6 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  // ✅ ফিক্সড নাম দেখানোর লজিক
   String _getUserName(dynamic post) {
     if (post.full_name != null && post.full_name!.isNotEmpty) {
       return post.full_name!;
@@ -192,9 +209,9 @@ class _FeedScreenState extends State<FeedScreen> {
                 }),
                 _shareOptionItem(
                     Icons.add_to_photos_rounded, "Share to Feed", Colors.orange,
-                    () {
-                  _handleAction(message: "Shared to your timeline! ✍️");
-                }),
+                        () {
+                      _handleAction(message: "Shared to your timeline! ✍️");
+                    }),
               ],
             ),
             const SizedBox(height: 20),
@@ -218,7 +235,7 @@ class _FeedScreenState extends State<FeedScreen> {
           const SizedBox(height: 8),
           Text(label,
               style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -244,12 +261,12 @@ class _FeedScreenState extends State<FeedScreen> {
                     borderRadius: BorderRadius.circular(10))),
             _buildOptionTile(Icons.bookmark_border, "Save Post",
                 "Add this to your saved items.", () {
-              _handleAction(message: "Post saved to collection! 💾");
-            }),
+                  _handleAction(message: "Post saved to collection! 💾");
+                }),
             _buildOptionTile(Icons.visibility_off_outlined, "Hide Post",
                 "See fewer posts like this.", () {
-              _handleAction(message: "Post hidden from feed. 🙈");
-            }),
+                  _handleAction(message: "Post hidden from feed. 🙈");
+                }),
             const Divider(),
             _buildOptionTile(
                 Icons.copy, "Copy Link", "Copy post url to clipboard.", () {
@@ -260,8 +277,8 @@ class _FeedScreenState extends State<FeedScreen> {
             }),
             _buildOptionTile(Icons.report_gmailerrorred, "Report Post",
                 "I'm concerned about this post.", () {
-              _handleAction(message: "Report submitted. Thanks! 🛡️");
-            }, isDestructive: true),
+                  _handleAction(message: "Report submitted. Thanks! 🛡️");
+                }, isDestructive: true),
             const SizedBox(height: 10),
           ],
         ),
@@ -276,7 +293,7 @@ class _FeedScreenState extends State<FeedScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration:
-            BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+        BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
         child: Icon(icon,
             color: isDestructive ? Colors.red : Colors.black87, size: 22),
       ),
@@ -287,7 +304,7 @@ class _FeedScreenState extends State<FeedScreen> {
               color: isDestructive ? Colors.red : Colors.black87)),
       subtitle: subtitle.isNotEmpty
           ? Text(subtitle,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]))
           : null,
       onTap: onTap,
     );
@@ -306,6 +323,7 @@ class _FeedScreenState extends State<FeedScreen> {
             return RefreshIndicator(
               onRefresh: () async {
                 await postController.getAllPost();
+                _loadFeedVideos(); // Refresh videos as well
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -324,18 +342,41 @@ class _FeedScreenState extends State<FeedScreen> {
                           _buildCreatePostBox(),
                           _buildStorySection(),
                           if (postController.posts.isEmpty) _buildEmptyState(),
+
+                          // ✅ POST LIST Builder with VIDEO Injection
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: postController.posts.length,
                             itemBuilder: (context, index) {
                               final post = postController.posts[index];
+
+                              // ✅ VIDEO INJECTION LOGIC
+                              // প্রতি ১০টি পোস্টের পর একটি ভিডিও (7-15 এর এভারেজ)
+                              Widget videoWidget = const SizedBox.shrink();
+                              if (_feedVideos.isNotEmpty && (index + 1) % 10 == 0) {
+                                // ভিডিও লিস্ট থেকে সাইক্লিক অর্ডারে ভিডিও নেওয়া হচ্ছে
+                                int videoIndex = ((index + 1) ~/ 10) % _feedVideos.length;
+                                videoWidget = Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: FacebookVideoCard(
+                                    key: ValueKey("feed_video_${_feedVideos[videoIndex].url}"),
+                                    videoData: _feedVideos[videoIndex],
+                                    allVideosList: _feedVideos.map((e) => e.url).toList(),
+                                  ),
+                                );
+                              }
+
                               return Column(
                                 children: [
                                   _buildFacebookPostCard(post, index),
+
+                                  // Existing Ad Logic
                                   if ((index + 1) % 500 == 0)
-                                    _buildAdContainer(AdType.banner300,
-                                        height: 260),
+                                    _buildAdContainer(AdType.banner300, height: 260),
+
+                                  // ✅ Show Video here
+                                  videoWidget,
                                 ],
                               );
                             },
@@ -392,14 +433,14 @@ class _FeedScreenState extends State<FeedScreen> {
             const CircleAvatar(
                 radius: 20,
                 backgroundImage:
-                    NetworkImage("https://i.pravatar.cc/150?img=12")),
+                NetworkImage("https://i.pravatar.cc/150?img=12")),
             const SizedBox(width: 10),
             Expanded(
               child: _FeedbackButton(
                 onTap: () => Get.to(() => const CreatePostScreen()),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                       color: const Color(0xFFF0F2F5),
                       borderRadius: BorderRadius.circular(25)),
@@ -494,16 +535,14 @@ class _FeedScreenState extends State<FeedScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ✅ এখানে নাম দেখানোর লজিক ঠিক করা হয়েছে
                       Text(
                         _getUserName(post),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      // ✅ এখানে টাইম দেখানোর লজিক ঠিক করা হয়েছে
                       Text(
                         _formatTimeAgo(post.created_at),
                         style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
+                        const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
                   ),
@@ -523,7 +562,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 if (post.post_content != null && post.post_content!.isNotEmpty)
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: Text(post.post_content!,
                         style: const TextStyle(
                             fontSize: 16, height: 1.4, color: Colors.black87)),
@@ -563,7 +602,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       const SizedBox(width: 6),
                       Text("${post.like_count}",
                           style:
-                              const TextStyle(color: Colors.grey, fontSize: 13))
+                          const TextStyle(color: Colors.grey, fontSize: 13))
                     ],
                   ],
                 ),
@@ -571,7 +610,7 @@ class _FeedScreenState extends State<FeedScreen> {
                     onTap: () => _handlePostClick(post),
                     child: Text("${post.comment_count ?? 0} Comments",
                         style:
-                            const TextStyle(color: Colors.grey, fontSize: 13))),
+                        const TextStyle(color: Colors.grey, fontSize: 13))),
               ],
             ),
           ),
@@ -610,8 +649,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _actionButton(
       {required IconData icon,
-      required String label,
-      required VoidCallback onTap}) {
+        required String label,
+        required VoidCallback onTap}) {
     return _FeedbackButton(
       onTap: onTap,
       child: _actionButtonContent(icon, label),
@@ -651,10 +690,10 @@ class _FeedScreenState extends State<FeedScreen> {
             border: Border.all(color: Colors.grey.shade300)),
         child: Center(
             child:
-                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.public, color: Colors.blueAccent),
-          Text(isSidebar ? "Sponsored" : "Advertisement")
-        ])),
+            Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.public, color: Colors.blueAccent),
+              Text(isSidebar ? "Sponsored" : "Advertisement")
+            ])),
       );
     }
     return Container(

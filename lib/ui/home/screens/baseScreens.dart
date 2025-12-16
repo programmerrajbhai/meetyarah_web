@@ -47,7 +47,7 @@ class _BasescreensState extends State<Basescreens> {
         elevation: 0,
         titleSpacing: isWebDesktop ? 30 : 20,
         title: Text(
-          "MEETYARAH",
+          "LaraaBook",
           style: GoogleFonts.bebasNeue(
             fontSize: 34,
             fontWeight: FontWeight.w500,
