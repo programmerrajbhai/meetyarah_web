@@ -14,9 +14,6 @@ import 'package:google_fonts/google_fonts.dart'; // Google Fonts
 import '../../../adsterra/adsterra_configs.dart';
 import '../ads/AdWebViewScreen.dart';
 import '../profile_screens/screens/view_profile_screens.dart';
-
-// ==========================================
-// 1. DATA MODEL
 // ==========================================
 class VideoDataModel {
   final String url;
@@ -72,8 +69,14 @@ class VideoDataHelper {
     'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400',
   ];
 
-  static final List<String> _names = ["Sofia Rose", "Anika Vlogz", "Misty Night", "Bella X", "Desi Queen", "Ryan Star", "Zara Life"];
-  static final List<String> _titles = ["Viral Video 🔥", "Late night fun 🤫", "My new dance cover 💃", "Behind the scenes...", "Must Watch! 😱"];
+  static final List<String> _names = [
+    "Sofia Rose", "Anika Vlogz", "Misty Night", "Bella X", "Desi Queen", "Ryan Star", "Zara Life"
+  ];
+
+  static final List<String> _titles = [
+    "Viral Video 🔥", "Late night fun 🤫", "My new dance cover 💃", "Behind the scenes...", "Must Watch! 😱"
+  ];
+
   static final List<String> _bios = [
     "💃 Professional Dancer & Choreographer.\n✨ Creating magic with moves.\n👇 Subscribe for exclusive tutorials!",
     "📸 Travel Vlogger exploring the world.\n✈️ Catch me if you can!\n❤️ Love to meet new people.",
@@ -81,6 +84,7 @@ class VideoDataHelper {
     "Digital Artist & Content Creator 🎨\nSharing my daily life and art.\nThanks for the support! ✨",
     "Just a girl living her dream. 💖\nFashion | Lifestyle | Beauty\nBusiness inquiries available via button above."
   ];
+
   static final List<String> _services = [
     "I offer shoutouts, personalized dance videos, and 1-on-1 video calls. Join my premium to see exclusive behind-the-scenes content!",
     "Available for brand collaborations, modeling shoots, and travel guidance. Check my premium for uncensored travel vlogs.",
@@ -88,33 +92,61 @@ class VideoDataHelper {
     "Custom artwork requests, digital portrait drawing, and art tutorials available."
   ];
 
-  static List<String> _generateImages(int count, int seed) => List.generate(count, (i) => "https://picsum.photos/seed/${seed + i}/400/600");
+  static List<String> _generateImages(int count, int seed) =>
+      List.generate(count, (i) => "https://picsum.photos/seed/${seed + i}/400/600");
 
-  static List<VideoDataModel> generateVideos(int count) {
+  // ✅ NEW FUNCTION: সব ভিডিও জেনারেট করার জন্য
+  static List<VideoDataModel> generateAllVideos() {
+    List<VideoDataModel> allVideos = [];
     var random = Random();
-    return List.generate(count, (index) {
-      int id = 64000 + index;
-      return VideoDataModel(
-        url: 'https://ser3.masahub.cc/myfiless/id/$id.mp4',
-        title: _titles[random.nextInt(_titles.length)],
-        channelName: _names[random.nextInt(_names.length)],
-        profileImage: _profileImages[random.nextInt(_profileImages.length)],
-        bio: _bios[random.nextInt(_bios.length)],
-        serviceOverview: _services[random.nextInt(_services.length)],
-        views: "${(random.nextDouble() * 5 + 0.1).toStringAsFixed(1)}M",
-        likes: "${random.nextInt(50) + 5}K",
-        comments: "${random.nextInt(1000) + 100}",
-        subscribers: "${(random.nextDouble() * 2 + 0.5).toStringAsFixed(1)}M",
-        premiumSubscribers: "${random.nextInt(50) + 10}K",
-        contactPrice: "\$${random.nextInt(50) + 20}",
-        timeAgo: "${random.nextInt(23) + 1}h",
-        duration: "0:30",
-        clientFeedback: "Amazing content!",
-        isVerified: random.nextBool(),
-        freeContentImages: _generateImages(9, index * 10),
-        premiumContentImages: _generateImages(12, index * 20),
-      );
-    });
+
+    // আপনার রেঞ্জ এবং সার্ভার লিস্ট
+    var ranges = [
+      {'server': 'https://server15.mmsbee1.xyz/uploads/myfiless/id/', 'min': 64500, 'max': 64600},
+      {'server': 'https://server15.mmsbee1.xyz/uploads/myfiless/id/', 'min': 65500, 'max': 65600},
+      {'server': 'https://server15.mmsbee1.xyz/uploads/myfiless/id/', 'min': 65696, 'max': 65800},
+      {'server': 'https://server24.mmsbee1.xyz/uploads/myfiless/id/', 'min': 45300, 'max': 46130},
+    ];
+
+    // প্রতিটি রেঞ্জ থেকে লুপ চালিয়ে ভিডিও অ্যাড করা হচ্ছে
+    for (var range in ranges) {
+      String server = range['server'] as String;
+      int min = range['min'] as int;
+      int max = range['max'] as int;
+
+      for (int id = min; id <= max; id++) {
+
+        String randomService = _services.isNotEmpty
+            ? _services[random.nextInt(_services.length)]
+            : "Exclusive content available.";
+
+        allVideos.add(VideoDataModel(
+          url: '$server$id.mp4', // এক্সাক্ট আইডি দিয়ে লিংক তৈরি
+          title: _titles[random.nextInt(_titles.length)],
+          channelName: _names[random.nextInt(_names.length)],
+          profileImage: _profileImages[random.nextInt(_profileImages.length)],
+          bio: _bios[random.nextInt(_bios.length)],
+          serviceOverview: randomService,
+          views: "${(random.nextDouble() * 5 + 0.1).toStringAsFixed(1)}M",
+          likes: "${random.nextInt(50) + 5}K",
+          comments: "${random.nextInt(1000) + 100}",
+          subscribers: "${(random.nextDouble() * 2 + 0.5).toStringAsFixed(1)}M",
+          premiumSubscribers: "${random.nextInt(50) + 10}K",
+          contactPrice: "\$${random.nextInt(50) + 20}",
+          timeAgo: "${random.nextInt(23) + 1}h",
+          duration: "0:30",
+          clientFeedback: "Amazing content!",
+          isVerified: random.nextBool(),
+          freeContentImages: _generateImages(9, id),
+          premiumContentImages: _generateImages(12, id + 1000),
+        ));
+      }
+    }
+
+    // সব ভিডিও মিক্স (Shuffle) করা
+    allVideos.shuffle();
+
+    return allVideos;
   }
 }
 
@@ -139,9 +171,11 @@ class _ReelScreensState extends State<ReelScreens> {
 
   void _loadData() async {
     await Future.delayed(const Duration(milliseconds: 800));
-    var list = VideoDataHelper.generateVideos(kIsWeb ? 50 : 50);
 
-    // URL Post ID Check
+    // ✅ UPDATE: এখন র‍্যান্ডম ৫০টার বদলে সব ভিডিও লোড হবে
+    var list = VideoDataHelper.generateAllVideos();
+
+    // URL Post ID Check (Web Deep Linking)
     if (kIsWeb) {
       try {
         String? targetPostId = Uri.base.queryParameters['post_id'];
@@ -151,14 +185,10 @@ class _ReelScreensState extends State<ReelScreens> {
             var targetVideo = list.removeAt(targetIndex);
             list.insert(0, targetVideo);
           }
-        } else {
-          list.shuffle();
         }
       } catch (e) {
-        list.shuffle();
+        debugPrint("Error parsing post ID: $e");
       }
-    } else {
-      list.shuffle();
     }
 
     if (mounted) {
@@ -350,6 +380,15 @@ class _ReelScreensState extends State<ReelScreens> {
 // ==========================================
 // 4. FACEBOOK VIDEO CARD (PROFESSIONAL & RESPONSIVE)
 // ==========================================
+// ==========================================
+// 4. FACEBOOK VIDEO CARD (Auto-Remove Slow Videos)
+// ==========================================
+// ==========================================
+// 4. FACEBOOK VIDEO CARD (Auto-Remove Slow Videos)
+// ==========================================
+// ==========================================
+// 4. FACEBOOK VIDEO CARD (4:5 Ratio & Auto-Remove)
+// ==========================================
 class FacebookVideoCard extends StatefulWidget {
   final VideoDataModel videoData;
   final List<String> allVideosList;
@@ -369,12 +408,13 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
   bool _isInitialized = false;
   bool _isPreviewing = false;
   bool _isNavigating = false;
-
-  // React & Like State
   bool _isLiked = false;
+
+  // ভিডিও লোড হতে দেরি হলে এটি true হবে এবং ভিডিও হাইড হয়ে যাবে
+  bool _isBroken = false;
+
   String _selectedReaction = "Like";
 
-  // Animation Controllers
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   late AnimationController _heartAnimationController;
@@ -404,16 +444,33 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
 
   void _initializeVideo() {
     String url = widget.videoData.url.replaceFirst("http://", "https://");
-    _controller = VideoPlayerController.networkUrl(Uri.parse(url))
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() => _isInitialized = true);
-          _controller?.setVolume(0);
-          _controller?.addListener(_previewTimeListener);
-        }
-      }).catchError((e) {
-        debugPrint("Video Error: $e");
-      });
+
+    _controller = VideoPlayerController.networkUrl(Uri.parse(url));
+
+    // 15 Second Timeout check logic
+    _controller!
+        .initialize()
+        .timeout(const Duration(seconds: 15), onTimeout: () {
+      throw TimeoutException("Video load took too long");
+    })
+        .then((_) {
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+          _isBroken = false;
+        });
+        _controller?.setVolume(0);
+        _controller?.addListener(_previewTimeListener);
+      }
+    })
+        .catchError((e) {
+      debugPrint("Video Error or Timeout: $e");
+      if (mounted) {
+        setState(() {
+          _isBroken = true;
+        });
+      }
+    });
   }
 
   void _previewTimeListener() {
@@ -454,17 +511,14 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
     });
   }
 
-  // ✅ HELPER: Common Action Handler
   void _handleAction({required String message, VoidCallback? action}) {
     if (Get.isBottomSheetOpen ?? false) Get.back();
     if (action != null) action();
     Get.snackbar("Success", message, snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.black87, colorText: Colors.white, margin: const EdgeInsets.all(20), borderRadius: 20, duration: const Duration(seconds: 1), icon: const Icon(Icons.check_circle, color: Colors.greenAccent));
   }
 
-  // ✅ Link Helper
   String _getPostLink() => "https://meetyarah.com/video/${widget.videoData.channelName.replaceAll(' ', '')}";
 
-  // ✅ Share Options Bottom Sheet
   void _showShareOptions() {
     showModalBottomSheet(
       context: context,
@@ -580,6 +634,8 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    if (_isBroken) return const SizedBox.shrink(); // Remove item if slow/broken
+
     final video = widget.videoData;
     return Card(
       margin: EdgeInsets.only(bottom: kIsWeb ? 16 : 8),
@@ -589,7 +645,7 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- HEADER ---
+          // Header
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: InkWell(
@@ -609,54 +665,56 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
           ),
           const SizedBox(height: 5),
 
+          // ✅ VIDEO PLAYER AREA (Modified for 4:5 Ratio)
           // --- VIDEO PLAYER AREA ---
-          GestureDetector(
-            onLongPressStart: (_) => _startPreview(),
-            onLongPressEnd: (_) => _stopPreview(),
-            onTap: _openFullScreen,
-            onDoubleTap: _onDoubleTapLike,
-            child: Container(
-              width: double.infinity,
-              color: Colors.black,
-              child: _isInitialized
-                  ? AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio > 1 ? _controller!.value.aspectRatio : 16 / 9,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    VideoPlayer(_controller!),
-                    // Overlay Gradient
-                    Positioned(
-                      bottom: 0, left: 0, right: 0,
-                      child: Container(height: 80, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
-                    ),
-                    // Play Icon Animation
-                    if (!_isPreviewing)
-                      ScaleTransition(
-                        scale: _pulseAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.6), width: 2)),
-                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 45),
-                        ),
-                      ),
-                    // Preview Tag
-                    if (_isPreviewing)
-                      Positioned(
-                        top: 10, right: 10,
-                        child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.9), borderRadius: BorderRadius.circular(20)), child: const Text("Preview Mode", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
-                      ),
-                    // Double Tap Heart
-                    if (_showHeart)
-                      ScaleTransition(scale: _heartScale, child: const Icon(Icons.favorite, color: Colors.white, size: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 20)])),
-                  ],
-                ),
-              )
-                  : const SizedBox(height: 300, child: Center(child: CircularProgressIndicator(color: Colors.white))),
-            ),
-          ),
+    // --- VIDEO PLAYER AREA ---
+    GestureDetector(
+    onLongPressStart: (_) => _startPreview(),
+    onLongPressEnd: (_) => _stopPreview(),
+    onTap: _openFullScreen,
+    onDoubleTap: _onDoubleTapLike,
+    child: Container(
+    width: double.infinity,
+    color: Colors.black,
+    child: _isInitialized
+    ? AspectRatio(
+    aspectRatio: _controller!.value.aspectRatio > 1 ? _controller!.value.aspectRatio : 16 / 9,
+    child: Stack(
+    alignment: Alignment.center,
+    children: [
+    VideoPlayer(_controller!),
+    // Overlay Gradient
+    Positioned(
+    bottom: 0, left: 0, right: 0,
+    child: Container(height: 80, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
+    ),
+    // Play Icon Animation
+    if (!_isPreviewing)
+    ScaleTransition(
+    scale: _pulseAnimation,
+    child: Container(
+    padding: const EdgeInsets.all(15),
+    decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.6), width: 2)),
+    child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 45),
+    ),
+    ),
+    // Preview Tag
+    if (_isPreviewing)
+    Positioned(
+    top: 10, right: 10,
+    child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.9), borderRadius: BorderRadius.circular(20)), child: const Text("Preview Mode", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
+    ),
+    // Double Tap Heart
+      if (_showHeart)
+        ScaleTransition(scale: _heartScale, child: const Icon(Icons.favorite, color: Colors.white, size: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 20)])),
+    ],
+    ),
+    )
+        : const SizedBox(height: 300, child: Center(child: CircularProgressIndicator(color: Colors.white))),
+    ),
+    ),
 
-          // --- STATS ---
+          // Footer Stats
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
@@ -673,13 +731,12 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
           ),
           const Divider(height: 0, thickness: 0.5),
 
-          // --- ACTIONS (Feedback Buttons) ---
+          // Actions
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Like Button
                 Expanded(
                   child: _FeedbackButton(
                     onTap: () {
@@ -703,8 +760,6 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
                     ),
                   ),
                 ),
-
-                // Comment Button (Opens Ad/Site)
                 Expanded(
                   child: _FeedbackButton(
                     onTap: () async {
@@ -724,8 +779,6 @@ class _FacebookVideoCardState extends State<FacebookVideoCard> with TickerProvid
                     ),
                   ),
                 ),
-
-                // Share Button (Opens Bottom Sheet)
                 Expanded(
                   child: _FeedbackButton(
                     onTap: _showShareOptions,

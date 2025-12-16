@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart'; // ✅ Link ওপেন করার জন্য এই প্যাকেজটি লাগবে
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../adsterra/controller/adsterra_controller.dart';
 import '../../../adsterra/widgets/simple_ad_widget.dart';
@@ -30,10 +30,8 @@ class _FeedScreenState extends State<FeedScreen> {
   final adController = Get.put(AdsterraController());
 
   final bool _showDemoAds = kDebugMode;
-
-  // ✅ 1. ডাইরেক্ট লিংক সেটআপ
-  final String _directLinkUrl = "https://www.google.com"; // 🔴 আপনার Adsterra Direct Link এখানে দিন
-  int _clickCount = 0; // ক্লিক গুনার জন্য
+  final String _directLinkUrl = "https://www.google.com";
+  int _clickCount = 0;
 
   @override
   void initState() {
@@ -45,7 +43,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Future<void> _checkAdBlocker() async {
     try {
-      final response = await http.get(Uri.parse("https://pl25522730.effectivegatecpm.com/dd/4f/78/dd4f7878c3a97f6f9e08bdf8911ad44b.js"));
+      final response = await http.get(Uri.parse(
+          "https://pl25522730.effectivegatecpm.com/dd/4f/78/dd4f7878c3a97f6f9e08bdf8911ad44b.js"));
       if (response.statusCode != 200 || response.body.isEmpty) {
         if (mounted) AdBlockWarningDialog.show(context);
       }
@@ -56,10 +55,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Future<void> _handlePostClick(dynamic post) async {
     _clickCount++;
-
     print("Post Click Count: $_clickCount");
 
-    // ✅ Direct Link পোস্ট হলে
     if (post.isDirectLink == true) {
       if (post.directUrl != null && post.directUrl!.isNotEmpty) {
         final Uri url = Uri.parse(post.directUrl!);
@@ -70,13 +67,10 @@ class _FeedScreenState extends State<FeedScreen> {
               snackPosition: SnackPosition.BOTTOM);
         }
       }
-
-      // তারপর Post Detail Page ওপেন করো
       Get.to(() => PostDetailPage(post: post));
       return;
     }
 
-    // ✅ সাধারণ পোস্টে আগের নিয়মে প্রতি ৩ ক্লিক পর Direct Link Ads
     if (_clickCount % 3 == 0) {
       final Uri url = Uri.parse(_directLinkUrl);
       if (await canLaunchUrl(url)) {
@@ -90,7 +84,6 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  // ✅ Helper: Action Feedback
   void _handleAction({required String message, VoidCallback? action}) {
     if (Get.isBottomSheetOpen ?? false) Get.back();
     if (action != null) action();
@@ -107,7 +100,7 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  // 🕒 Helper: Time Ago Formatter
+// 🕒 Helper: Time Ago Formatter
   String _formatTimeAgo(String? dateString) {
     if (dateString == null || dateString.isEmpty) return "Just now";
     try {
@@ -131,7 +124,17 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  // 🔗 Dynamic Link Generator
+  // ✅ ফিক্সড নাম দেখানোর লজিক
+  String _getUserName(dynamic post) {
+    if (post.full_name != null && post.full_name!.isNotEmpty) {
+      return post.full_name!;
+    }
+    if (post.username != null && post.username!.isNotEmpty) {
+      return post.username!;
+    }
+    return "Unknown User";
+  }
+
   String _getPostLink(String postId) {
     if (kIsWeb) {
       return "${Uri.base.origin}/?id=$postId";
@@ -143,7 +146,6 @@ class _FeedScreenState extends State<FeedScreen> {
     Clipboard.setData(ClipboardData(text: _getPostLink(postId)));
   }
 
-  // 📋 Share Options
   void _showShareOptions(BuildContext context, dynamic post) {
     showModalBottomSheet(
       context: context,
@@ -157,11 +159,17 @@ class _FeedScreenState extends State<FeedScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 15),
-            Text("Share this post", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Share this post",
+                style: GoogleFonts.inter(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 25),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -174,13 +182,17 @@ class _FeedScreenState extends State<FeedScreen> {
                 _shareOptionItem(Icons.share, "More Options", Colors.green, () {
                   _handleAction(
                     message: "Opening share options...",
-                    action: () => Share.share("Check out this post: ${_getPostLink(post.post_id ?? "0")}"),
+                    action: () => Share.share(
+                        "Check out this post: ${_getPostLink(post.post_id ?? "0")}"),
                   );
                 }),
-                _shareOptionItem(Icons.send_rounded, "Send in App", Colors.purple, () {
+                _shareOptionItem(
+                    Icons.send_rounded, "Send in App", Colors.purple, () {
                   _handleAction(message: "Sent to friend successfully! 🚀");
                 }),
-                _shareOptionItem(Icons.add_to_photos_rounded, "Share to Feed", Colors.orange, () {
+                _shareOptionItem(
+                    Icons.add_to_photos_rounded, "Share to Feed", Colors.orange,
+                    () {
                   _handleAction(message: "Shared to your timeline! ✍️");
                 }),
               ],
@@ -192,50 +204,62 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget _shareOptionItem(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _shareOptionItem( IconData icon, String label, Color color, VoidCallback onTap) {
     return _FeedbackButton(
       onTap: onTap,
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  // 🛠 3-Dot Menu Options
   void _showPostOptions(BuildContext context, dynamic post) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 10), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
-
-            _buildOptionTile(Icons.bookmark_border, "Save Post", "Add this to your saved items.", () {
+            Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
+            _buildOptionTile(Icons.bookmark_border, "Save Post",
+                "Add this to your saved items.", () {
               _handleAction(message: "Post saved to collection! 💾");
             }),
-            _buildOptionTile(Icons.visibility_off_outlined, "Hide Post", "See fewer posts like this.", () {
+            _buildOptionTile(Icons.visibility_off_outlined, "Hide Post",
+                "See fewer posts like this.", () {
               _handleAction(message: "Post hidden from feed. 🙈");
             }),
             const Divider(),
-            _buildOptionTile(Icons.copy, "Copy Link", "Copy post url to clipboard.", () {
+            _buildOptionTile(
+                Icons.copy, "Copy Link", "Copy post url to clipboard.", () {
               _handleAction(
                 message: "Link copied! 🔗",
                 action: () => _copyPostLink(post.post_id ?? "0"),
               );
             }),
-            _buildOptionTile(Icons.report_gmailerrorred, "Report Post", "I'm concerned about this post.", () {
+            _buildOptionTile(Icons.report_gmailerrorred, "Report Post",
+                "I'm concerned about this post.", () {
               _handleAction(message: "Report submitted. Thanks! 🛡️");
             }, isDestructive: true),
             const SizedBox(height: 10),
@@ -245,15 +269,26 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget _buildOptionTile(IconData icon, String title, String subtitle, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildOptionTile(
+      IconData icon, String title, String subtitle, VoidCallback onTap,
+      {bool isDestructive = false}) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-        child: Icon(icon, color: isDestructive ? Colors.red : Colors.black87, size: 22),
+        decoration:
+            BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+        child: Icon(icon,
+            color: isDestructive ? Colors.red : Colors.black87, size: 22),
       ),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: isDestructive ? Colors.red : Colors.black87)),
-      subtitle: subtitle.isNotEmpty ? Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])) : null,
+      title: Text(title,
+          style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: isDestructive ? Colors.red : Colors.black87)),
+      subtitle: subtitle.isNotEmpty
+          ? Text(subtitle,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+          : null,
       onTap: onTap,
     );
   }
@@ -269,7 +304,9 @@ class _FeedScreenState extends State<FeedScreen> {
             double feedWidth = isWideScreen ? 600 : constraints.maxWidth;
 
             return RefreshIndicator(
-              onRefresh: () async { await postController.getAllPost(); },
+              onRefresh: () async {
+                await postController.getAllPost();
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +314,8 @@ class _FeedScreenState extends State<FeedScreen> {
                   SizedBox(
                     width: feedWidth,
                     child: Obx(() {
-                      if (postController.isLoading.value) return _buildShimmer();
+                      if (postController.isLoading.value)
+                        return _buildShimmer();
 
                       return ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -285,10 +323,7 @@ class _FeedScreenState extends State<FeedScreen> {
                         children: [
                           _buildCreatePostBox(),
                           _buildStorySection(),
-                          _buildAdContainer(AdType.banner728, height: 100),
-
                           if (postController.posts.isEmpty) _buildEmptyState(),
-
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -298,8 +333,9 @@ class _FeedScreenState extends State<FeedScreen> {
                               return Column(
                                 children: [
                                   _buildFacebookPostCard(post, index),
-                                  // ✅ 3. ফিড লিস্টে প্রতি ৩ পোস্ট পরপর অ্যাড দেখাবে
-                                  if ((index + 1) % 3 == 0) _buildAdContainer(AdType.banner300, height: 260),
+                                  if ((index + 1) % 500 == 0)
+                                    _buildAdContainer(AdType.banner300,
+                                        height: 260),
                                 ],
                               );
                             },
@@ -315,9 +351,15 @@ class _FeedScreenState extends State<FeedScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            const Align(alignment: Alignment.centerLeft, child: Text("Sponsored", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
+                            const Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text("Sponsored",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey))),
                             const SizedBox(height: 10),
-                            _buildAdContainer(AdType.native, height: 300, isSidebar: true),
+                            _buildAdContainer(AdType.native,
+                                height: 300, isSidebar: true),
                             const SizedBox(height: 20),
                             const Divider(),
                             _buildFriendSuggestions(),
@@ -340,25 +382,36 @@ class _FeedScreenState extends State<FeedScreen> {
       margin: const EdgeInsets.fromLTRB(0, 8, 0, 8),
       elevation: 0.5,
       color: Colors.white,
-      shape: kIsWeb ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)) : const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      shape: kIsWeb
+          ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+          : const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            const CircleAvatar(radius: 20, backgroundImage: NetworkImage("https://i.pravatar.cc/150?img=12")),
+            const CircleAvatar(
+                radius: 20,
+                backgroundImage:
+                    NetworkImage("https://i.pravatar.cc/150?img=12")),
             const SizedBox(width: 10),
             Expanded(
               child: _FeedbackButton(
                 onTap: () => Get.to(() => const CreatePostScreen()),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(color: const Color(0xFFF0F2F5), borderRadius: BorderRadius.circular(25)),
-                  child: const Text("What's on your mind?", style: TextStyle(color: Colors.grey, fontSize: 15)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFF0F2F5),
+                      borderRadius: BorderRadius.circular(25)),
+                  child: const Text("What's on your mind?",
+                      style: TextStyle(color: Colors.grey, fontSize: 15)),
                 ),
               ),
             ),
             const SizedBox(width: 10),
-            IconButton(icon: const Icon(Icons.photo_library, color: Colors.green), onPressed: () => Get.to(() => const CreatePostScreen())),
+            IconButton(
+                icon: const Icon(Icons.photo_library, color: Colors.green),
+                onPressed: () => Get.to(() => const CreatePostScreen())),
           ],
         ),
       ),
@@ -378,17 +431,36 @@ class _FeedScreenState extends State<FeedScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: _FeedbackButton(
-              onTap: (){},
+              onTap: () {},
               child: Container(
                 width: 110,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(image: NetworkImage("https://picsum.photos/200/300?random=$index"), fit: BoxFit.cover),
+                  image: DecorationImage(
+                      image: NetworkImage(
+                          "https://picsum.photos/200/300?random=$index"),
+                      fit: BoxFit.cover),
                 ),
                 child: Stack(
                   children: [
-                    Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black.withOpacity(0.6), Colors.transparent]))),
-                    Positioned(bottom: 8, left: 8, child: Text(index == 0 ? "Add Story" : "User $index", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+                    Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.6),
+                                  Colors.transparent
+                                ]))),
+                    Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: Text(index == 0 ? "Add Story" : "User $index",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13))),
                   ],
                 ),
               ),
@@ -403,7 +475,9 @@ class _FeedScreenState extends State<FeedScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
       elevation: 0.5,
-      shape: kIsWeb ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)) : const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      shape: kIsWeb
+          ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+          : const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,19 +486,24 @@ class _FeedScreenState extends State<FeedScreen> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                CircleAvatar(backgroundImage: NetworkImage(post.profile_picture_url ?? "https://via.placeholder.com/150")),
+                CircleAvatar(
+                    backgroundImage: NetworkImage(post.profile_picture_url ??
+                        "https://via.placeholder.com/150")),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ✅ এখানে নাম দেখানোর লজিক ঠিক করা হয়েছে
                       Text(
-                        post.full_name ?? post.username ?? "Unknown User",
+                        _getUserName(post),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      // ✅ এখানে টাইম দেখানোর লজিক ঠিক করা হয়েছে
                       Text(
                         _formatTimeAgo(post.created_at),
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
                   ),
@@ -437,15 +516,17 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
           InkWell(
-            // ✅ 4. এখানে নতুন ক্লিক হ্যান্ডলার বসানো হয়েছে
             onTap: () => _handlePostClick(post),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (post.post_content != null && post.post_content!.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: Text(post.post_content!, style: const TextStyle(fontSize: 16, height: 1.4, color: Colors.black87)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Text(post.post_content!,
+                        style: const TextStyle(
+                            fontSize: 16, height: 1.4, color: Colors.black87)),
                   ),
                 const SizedBox(height: 8),
                 if (post.image_url != null && post.image_url!.isNotEmpty)
@@ -458,7 +539,12 @@ class _FeedScreenState extends State<FeedScreen> {
                       child: Image.network(
                         post.image_url!,
                         fit: BoxFit.cover,
-                        errorBuilder: (c, o, s) => Container(height: 400, color: Colors.grey[200], alignment: Alignment.center, child: const Icon(Icons.broken_image, color: Colors.grey, size: 50)),
+                        errorBuilder: (c, o, s) => Container(
+                            height: 400,
+                            color: Colors.grey[200],
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image,
+                                color: Colors.grey, size: 50)),
                       ),
                     ),
                   ),
@@ -473,10 +559,19 @@ class _FeedScreenState extends State<FeedScreen> {
                 Row(
                   children: [
                     _buildReactionIcon(Icons.thumb_up, Colors.blue),
-                    if ((post.like_count ?? 0) > 0) ...[const SizedBox(width: 6), Text("${post.like_count}", style: const TextStyle(color: Colors.grey, fontSize: 13))],
+                    if ((post.like_count ?? 0) > 0) ...[
+                      const SizedBox(width: 6),
+                      Text("${post.like_count}",
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 13))
+                    ],
                   ],
                 ),
-                InkWell(onTap: () => _handlePostClick(post), child: Text("${post.comment_count ?? 0} Comments", style: const TextStyle(color: Colors.grey, fontSize: 13))),
+                InkWell(
+                    onTap: () => _handlePostClick(post),
+                    child: Text("${post.comment_count ?? 0} Comments",
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 13))),
               ],
             ),
           ),
@@ -486,8 +581,16 @@ class _FeedScreenState extends State<FeedScreen> {
             child: Row(
               children: [
                 Expanded(child: _buildReactionButton(post, index)),
-                Expanded(child: _actionButton(icon: Icons.chat_bubble_outline, label: "Comment", onTap: () => _handlePostClick(post))),
-                Expanded(child: _actionButton(icon: Icons.share_outlined, label: "Share", onTap: () => _showShareOptions(context, post))),
+                Expanded(
+                    child: _actionButton(
+                        icon: Icons.chat_bubble_outline,
+                        label: "Comment",
+                        onTap: () => _handlePostClick(post))),
+                Expanded(
+                    child: _actionButton(
+                        icon: Icons.share_outlined,
+                        label: "Share",
+                        onTap: () => _showShareOptions(context, post))),
               ],
             ),
           ),
@@ -505,58 +608,100 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget _actionButton({required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _actionButton(
+      {required IconData icon,
+      required String label,
+      required VoidCallback onTap}) {
     return _FeedbackButton(
       onTap: onTap,
       child: _actionButtonContent(icon, label),
     );
   }
 
-  Widget _actionButtonContent(IconData icon, String label, {Color color = Colors.grey}) {
+  Widget _actionButtonContent(IconData icon, String label,
+      {Color color = Colors.grey}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color == Colors.grey ? Colors.grey[600] : color, size: 20),
+          Icon(icon,
+              color: color == Colors.grey ? Colors.grey[600] : color, size: 20),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: color == Colors.grey ? Colors.grey[600] : color, fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(label,
+              style: TextStyle(
+                  color: color == Colors.grey ? Colors.grey[600] : color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14)),
         ],
       ),
     );
   }
 
-  Widget _buildAdContainer(AdType type, {required double height, bool isSidebar = false}) {
+  Widget _buildAdContainer(AdType type,
+      {required double height, bool isSidebar = false}) {
     if (_showDemoAds) {
       return Container(
-        height: height, width: double.infinity,
+        height: height,
+        width: double.infinity,
         margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
-        child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.public, color: Colors.blueAccent), Text(isSidebar ? "Sponsored" : "Advertisement")])),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300)),
+        child: Center(
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.public, color: Colors.blueAccent),
+          Text(isSidebar ? "Sponsored" : "Advertisement")
+        ])),
       );
     }
-    return Container(height: height, width: double.infinity, margin: const EdgeInsets.symmetric(vertical: 8), color: Colors.white, child: SimpleAdWidget(type: type));
+    return Container(
+        height: height,
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        color: Colors.white,
+        child: SimpleAdWidget(type: type));
   }
 
-  Widget _buildEmptyState() => const Padding(padding: EdgeInsets.all(40), child: Center(child: Text("No posts found.")));
+  Widget _buildEmptyState() => const Padding(
+      padding: EdgeInsets.all(40),
+      child: Center(child: Text("No posts found.")));
 
   Widget _buildFriendSuggestions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("People You May Know", style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text("People You May Know",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        ListView.builder(shrinkWrap: true, itemCount: 2, itemBuilder: (c, i) => const ListTile(title: Text("User Name"), leading: CircleAvatar())),
+        ListView.builder(
+            shrinkWrap: true,
+            itemCount: 2,
+            itemBuilder: (c, i) => const ListTile(
+                title: Text("User Name"), leading: CircleAvatar())),
       ],
     );
   }
 
   Widget _buildReactionIcon(IconData icon, Color color) {
-    return Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: color, shape: BoxShape.circle), child: Icon(icon, size: 10, color: Colors.white));
+    return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        child: Icon(icon, size: 10, color: Colors.white));
   }
 
   Widget _buildShimmer() {
-    return ListView.builder(itemCount: 3, itemBuilder: (c, i) => Shimmer.fromColors(baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!, child: Container(height: 250, color: Colors.white, margin: const EdgeInsets.all(10))));
+    return ListView.builder(
+        itemCount: 3,
+        itemBuilder: (c, i) => Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+                height: 250,
+                color: Colors.white,
+                margin: const EdgeInsets.all(10))));
   }
 }
 
@@ -574,12 +719,19 @@ class _FeedbackButtonState extends State<_FeedbackButton> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) { setState(() => _isPressed = false); widget.onTap(); },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        transform: _isPressed ? Matrix4.diagonal3Values(0.95, 0.95, 1.0) : Matrix4.identity(),
-        decoration: BoxDecoration(color: _isPressed ? Colors.grey.shade200 : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+        transform: _isPressed
+            ? Matrix4.diagonal3Values(0.95, 0.95, 1.0)
+            : Matrix4.identity(),
+        decoration: BoxDecoration(
+            color: _isPressed ? Colors.grey.shade200 : Colors.transparent,
+            borderRadius: BorderRadius.circular(8)),
         child: widget.child,
       ),
     );
