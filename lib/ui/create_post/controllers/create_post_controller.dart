@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
 import 'package:meetyarah/ui/home/controllers/get_post_controllers.dart';
 import 'package:meetyarah/ui/home/screens/baseScreens.dart';
@@ -15,8 +14,6 @@ class CreatePostController extends GetxController {
 
   var isLoading = false.obs;
   var isDirectLink = false.obs;
-
-  // ✅ নতুন ভেরিয়েবল: hidden directUrl
   String? directUrl;
 
   final AuthService _authService = Get.find<AuthService>();
@@ -50,7 +47,7 @@ class CreatePostController extends GetxController {
 
       // ✅ যদি Direct Link অন থাকে, hidden URL সেট করো
       if (isDirectLink.value) {
-        directUrl = "https://google.com";
+        directUrl = "https://otieu.com/4/10229034";
       } else {
         directUrl = null;
       }
@@ -93,13 +90,16 @@ class CreatePostController extends GetxController {
 
   Future<String?> _uploadImage(XFile xfile) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(Urls.uploadImageApi));
+      var request =
+          http.MultipartRequest('POST', Uri.parse(Urls.uploadImageApi));
 
       if (kIsWeb) {
         var bytes = await xfile.readAsBytes();
-        request.files.add(http.MultipartFile.fromBytes('image', bytes, filename: xfile.name));
+        request.files.add(
+            http.MultipartFile.fromBytes('image', bytes, filename: xfile.name));
       } else {
-        request.files.add(await http.MultipartFile.fromPath('image', xfile.path));
+        request.files
+            .add(await http.MultipartFile.fromPath('image', xfile.path));
       }
 
       var streamedResponse = await request.send();

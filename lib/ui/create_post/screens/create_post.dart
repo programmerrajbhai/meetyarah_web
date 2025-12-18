@@ -34,7 +34,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   // ভিডিও পিক করার ফাংশন
   Future<void> _pickVideo() async {
-    final XFile? pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _mediaList.add(pickedFile);
@@ -67,7 +68,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ),
         title: const Text(
           "Create Post",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
           // পোস্ট বাটন
@@ -78,19 +80,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 onPressed: controller.isLoading.value
                     ? null
                     : () {
-                  // কন্ট্রোলারে ছবি পাঠিয়ে পোস্ট করা হচ্ছে
-                  controller.createPost(images: _mediaList);
-                },
+                        // কন্ট্রোলারে ছবি পাঠিয়ে পোস্ট করা হচ্ছে
+                        controller.createPost(images: _mediaList);
+                      },
                 style: TextButton.styleFrom(
-                  backgroundColor: controller.isLoading.value ? Colors.grey[300] : Colors.blue,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  backgroundColor: controller.isLoading.value
+                      ? Colors.grey[300]
+                      : Colors.blue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                 ),
                 child: controller.isLoading.value
                     ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text("POST", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Text("POST",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             );
           }),
@@ -109,9 +118,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     children: [
                       CircleAvatar(
                         radius: 22,
-                        backgroundImage: (profilePic != null && profilePic.isNotEmpty)
-                            ? NetworkImage(profilePic)
-                            : const NetworkImage("https://i.pravatar.cc/150?img=12"),
+                        backgroundImage:
+                            (profilePic != null && profilePic.isNotEmpty)
+                                ? NetworkImage(profilePic)
+                                : const NetworkImage(
+                                    "https://i.pravatar.cc/150?img=12"),
                       ),
                       const SizedBox(width: 12),
                       Column(
@@ -119,18 +130,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         children: [
                           Text(
                             userName,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey[300]!),
                                 borderRadius: BorderRadius.circular(4)),
                             child: const Row(
                               children: [
-                                Icon(Icons.public, size: 12, color: Colors.grey),
+                                Icon(Icons.public,
+                                    size: 12, color: Colors.grey),
                                 SizedBox(width: 4),
-                                Text("Public", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                Text("Public",
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey)),
                               ],
                             ),
                           )
@@ -160,7 +176,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
@@ -176,7 +193,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 image: DecorationImage(
                                   image: kIsWeb
                                       ? NetworkImage(_mediaList[index].path)
-                                      : FileImage(File(_mediaList[index].path)) as ImageProvider,
+                                      : FileImage(File(_mediaList[index].path))
+                                          as ImageProvider,
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -188,8 +206,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 onTap: () => _removeMedia(index),
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                  decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle),
+                                  child: const Icon(Icons.close,
+                                      color: Colors.white, size: 18),
                                 ),
                               ),
                             ),
@@ -208,22 +229,30 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border(top: BorderSide(color: Colors.grey[200]!)),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: const Offset(0, -2))
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Direct Link Switch
                 Obx(() => SwitchListTile(
-                  title: const Text("Enable Direct Link Ad", style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text("This post will open a direct link when clicked", style: TextStyle(fontSize: 12)),
-                  value: controller.isDirectLink.value,
-                  activeColor: Colors.blue,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (val) {
-                    controller.isDirectLink.value = val;
-                  },
-                )),
+                      title: const Text("Enable Direct Link Ad",
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text(
+                          "This post will open a direct link when clicked",
+                          style: TextStyle(fontSize: 12)),
+                      value: controller.isDirectLink.value,
+                      activeColor: Colors.blue,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        controller.isDirectLink.value = val;
+                      },
+                    )),
 
                 const Divider(),
 
@@ -233,18 +262,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   children: [
                     TextButton.icon(
                       onPressed: _pickImages,
-                      icon: const Icon(Icons.photo_library, color: Colors.green),
-                      label: const Text("Photo", style: TextStyle(color: Colors.black87)),
+                      icon:
+                          const Icon(Icons.photo_library, color: Colors.green),
+                      label: const Text("Photo",
+                          style: TextStyle(color: Colors.black87)),
                     ),
                     TextButton.icon(
                       onPressed: _pickVideo, // ভিডিও পিকার
                       icon: const Icon(Icons.video_call, color: Colors.red),
-                      label: const Text("Video", style: TextStyle(color: Colors.black87)),
+                      label: const Text("Video",
+                          style: TextStyle(color: Colors.black87)),
                     ),
                     TextButton.icon(
                       onPressed: () {},
                       icon: const Icon(Icons.camera_alt, color: Colors.blue),
-                      label: const Text("Camera", style: TextStyle(color: Colors.black87)),
+                      label: const Text("Camera",
+                          style: TextStyle(color: Colors.black87)),
                     ),
                   ],
                 ),
