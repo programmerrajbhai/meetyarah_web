@@ -22,10 +22,10 @@ class SplashScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  LarabookLogo(size: 120), // লোগো উইজেট
+                  MeetyarahLogo(size: 120), // লোগো উইজেট
                   SizedBox(height: 20),
                   Text(
-                    "Larabook",
+                    "Meetyarah",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

@@ -5,21 +5,15 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-// ✅ Ensure these paths match your project structure
-import '../../../adsterra/adsterra_configs.dart';
-import '../../../adsterra/controller/adsterra_controller.dart';
-import '../../../adsterra/widgets/simple_ad_widget.dart';
+// ✅ ক্লিন ইমপোর্টস (Adsterra এবং AdBlock রিমুভ করা হয়েছে)
 import '../../reels/screens/reel_screens.dart'; // Contains FacebookVideoCard & VideoDataHelper
-import '../../reels/ads/AdWebViewScreen.dart';
 import '../controllers/get_post_controllers.dart';
 import '../controllers/like_controller.dart';
 import '../../view_post/screens/post_details.dart';
 import '../../create_post/screens/create_post.dart';
 import '../widgets/like_button.dart';
-import '../widgets/adblock_alert.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -31,11 +25,6 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final postController = Get.put(GetPostController());
   final likeController = Get.put(LikeController());
-  final adController = Get.put(AdsterraController());
-
-  final bool _showDemoAds = kDebugMode;
-  final String _directLinkUrl = "https://otieu.com/4/10229034";
-  int _clickCount = 0;
 
   // ✅ ভিডিও লিস্ট রাখার জন্য ভেরিয়েবল
   List<VideoDataModel> _feedVideos = [];
@@ -49,9 +38,7 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAdBlocker();
-    });
+    // ✅ _checkAdBlocker রিমুভ করা হয়েছে
 
     // ✅ প্রথমে সব ডেটা লোড করা হবে, তারপর লিংক চেক করা হবে
     _initializeFeedData();
@@ -84,7 +71,7 @@ class _FeedScreenState extends State<FeedScreen> {
             var post = postController.posts.removeAt(index);
             setState(() {
               _pinnedPost = post;
-              // পোস্টটি লিস্টের শুরুতেও দিয়ে রাখলাম যাতে রিফ্রেশ করলে হার না যায়
+              // পোস্টটি লিস্টের শুরুতেও দিয়ে রাখলাম যাতে রিফ্রেশ করলে হার না যায়
               postController.posts.insert(0, post);
             });
 
@@ -113,7 +100,7 @@ class _FeedScreenState extends State<FeedScreen> {
         if (targetPostId != null && targetPostId.isNotEmpty) {
           debugPrint("🔗 Video Deep Link Found: $targetPostId");
           int targetIndex =
-              videos.indexWhere((video) => video.url.contains(targetPostId));
+          videos.indexWhere((video) => video.url.contains(targetPostId));
 
           if (targetIndex != -1) {
             var foundVideo = videos.removeAt(targetIndex);
@@ -142,39 +129,10 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  Future<void> _checkAdBlocker() async {
-    try {
-      final response = await http.get(Uri.parse(
-          "https://pl25522730.effectivegatecpm.com/dd/4f/78/dd4f7878c3a97f6f9e08bdf8911ad44b.js"));
-      if (response.statusCode != 200 || response.body.isEmpty) {
-        if (mounted) AdBlockWarningDialog.show(context);
-      }
-    } catch (e) {
-      if (mounted) AdBlockWarningDialog.show(context);
-    }
-  }
-
+  // ✅ ক্লিক হ্যান্ডলার ক্লিন করা হয়েছে (অ্যাড লজিক রিমুভড)
   Future<void> _handlePostClick(dynamic post) async {
-    _clickCount++;
-    if (post.isDirectLink == true) {
-      if (post.directUrl != null && post.directUrl!.isNotEmpty) {
-        final Uri url = Uri.parse(post.directUrl!);
-        if (await canLaunchUrl(url)) {
-          await launchUrl(url, mode: LaunchMode.externalApplication);
-        }
-      }
-      Get.to(() => PostDetailPage(post: post));
-      return;
-    }
-
-    if (_clickCount % 3 == 0) {
-      final Uri url = Uri.parse(_directLinkUrl);
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      }
-    } else {
-      Get.to(() => PostDetailPage(post: post));
-    }
+    // সরাসরি পোস্ট ডিটেইলসে যাবে
+    Get.to(() => PostDetailPage(post: post));
   }
 
   void _handleAction({required String message, VoidCallback? action}) {
@@ -291,9 +249,9 @@ class _FeedScreenState extends State<FeedScreen> {
                 }),
                 _shareOptionItem(
                     Icons.add_to_photos_rounded, "Share to Feed", Colors.orange,
-                    () {
-                  _handleAction(message: "Shared to your timeline! ✍️");
-                }),
+                        () {
+                      _handleAction(message: "Shared to your timeline! ✍️");
+                    }),
               ],
             ),
             const SizedBox(height: 20),
@@ -318,7 +276,7 @@ class _FeedScreenState extends State<FeedScreen> {
           const SizedBox(height: 8),
           Text(label,
               style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -346,25 +304,25 @@ class _FeedScreenState extends State<FeedScreen> {
                 Icons.bookmark_border,
                 "Save Post",
                 "Add this to your saved items.",
-                () => _handleAction(message: "Post saved to collection! 💾")),
+                    () => _handleAction(message: "Post saved to collection! 💾")),
             _buildOptionTile(
                 Icons.visibility_off_outlined,
                 "Hide Post",
                 "See fewer posts like this.",
-                () => _handleAction(message: "Post hidden from feed. 🙈")),
+                    () => _handleAction(message: "Post hidden from feed. 🙈")),
             const Divider(),
             _buildOptionTile(
                 Icons.copy,
                 "Copy Link",
                 "Copy post url to clipboard.",
-                () => _handleAction(
+                    () => _handleAction(
                     message: "Link copied! 🔗",
                     action: () => _copyPostLink(post.post_id.toString()))),
             _buildOptionTile(
                 Icons.report_gmailerrorred,
                 "Report Post",
                 "I'm concerned about this post.",
-                () => _handleAction(message: "Report submitted. Thanks! 🛡️"),
+                    () => _handleAction(message: "Report submitted. Thanks! 🛡️"),
                 isDestructive: true),
             const SizedBox(height: 10),
           ],
@@ -380,7 +338,7 @@ class _FeedScreenState extends State<FeedScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration:
-            BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+        BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
         child: Icon(icon,
             color: isDestructive ? Colors.red : Colors.black87, size: 22),
       ),
@@ -391,7 +349,7 @@ class _FeedScreenState extends State<FeedScreen> {
               color: isDestructive ? Colors.red : Colors.black87)),
       subtitle: subtitle.isNotEmpty
           ? Text(subtitle,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]))
           : null,
       onTap: onTap,
     );
@@ -432,7 +390,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           if (_pinnedVideo != null) ...[
                             Padding(
                               padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              const EdgeInsets.symmetric(vertical: 8.0),
                               child: Column(
                                 children: [
                                   Container(
@@ -441,7 +399,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                     decoration: BoxDecoration(
                                         color: Colors.green.withOpacity(0.1),
                                         borderRadius:
-                                            BorderRadius.circular(20)),
+                                        BorderRadius.circular(20)),
                                     child: const Text("Shared Video",
                                         style: TextStyle(
                                             color: Colors.green,
@@ -451,10 +409,10 @@ class _FeedScreenState extends State<FeedScreen> {
                                   const SizedBox(height: 8),
                                   FacebookVideoCard(
                                     key:
-                                        ValueKey("pinned_${_pinnedVideo!.url}"),
+                                    ValueKey("pinned_${_pinnedVideo!.url}"),
                                     videoData: _pinnedVideo!,
                                     allVideosList:
-                                        _feedVideos.map((e) => e.url).toList(),
+                                    _feedVideos.map((e) => e.url).toList(),
                                   ),
                                 ],
                               ),
@@ -465,7 +423,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           if (_pinnedPost != null) ...[
                             Padding(
                               padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              const EdgeInsets.symmetric(vertical: 8.0),
                               child: Column(
                                 children: [
                                   Container(
@@ -474,7 +432,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                     decoration: BoxDecoration(
                                         color: Colors.blue.withOpacity(0.1),
                                         borderRadius:
-                                            BorderRadius.circular(20)),
+                                        BorderRadius.circular(20)),
                                     child: const Text("Shared Post",
                                         style: TextStyle(
                                             color: Colors.blue,
@@ -507,13 +465,13 @@ class _FeedScreenState extends State<FeedScreen> {
                                     ((index + 1) ~/ 10) % _feedVideos.length;
                                 videoWidget = Padding(
                                   padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                                   child: FacebookVideoCard(
                                     key: ValueKey(
                                         "feed_video_${_feedVideos[videoIndex].url}"),
                                     videoData: _feedVideos[videoIndex],
                                     allVideosList:
-                                        _feedVideos.map((e) => e.url).toList(),
+                                    _feedVideos.map((e) => e.url).toList(),
                                   ),
                                 );
                               }
@@ -522,9 +480,7 @@ class _FeedScreenState extends State<FeedScreen> {
                               return Column(
                                 children: [
                                   _buildFacebookPostCard(post, index),
-                                  if ((index + 1) % 500 == 0)
-                                    _buildAdContainer(AdType.banner300,
-                                        height: 260),
+                                  // ✅ বিজ্ঞাপন রিমুভ করা হয়েছে
                                   videoWidget,
                                 ],
                               );
@@ -541,17 +497,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            const Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text("Sponsored",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey))),
-                            const SizedBox(height: 10),
-                            _buildAdContainer(AdType.native,
-                                height: 300, isSidebar: true),
-                            const SizedBox(height: 20),
-                            const Divider(),
+                            // ✅ Sponsored এবং অ্যাড সেকশন রিমুভ করা হয়েছে
                             _buildFriendSuggestions(),
                           ],
                         ),
@@ -582,14 +528,14 @@ class _FeedScreenState extends State<FeedScreen> {
             const CircleAvatar(
                 radius: 20,
                 backgroundImage:
-                    NetworkImage("https://i.pravatar.cc/150?img=12")),
+                NetworkImage("https://i.pravatar.cc/150?img=12")),
             const SizedBox(width: 10),
             Expanded(
               child: _FeedbackButton(
                 onTap: () => Get.to(() => const CreatePostScreen()),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                       color: const Color(0xFFF0F2F5),
                       borderRadius: BorderRadius.circular(25)),
@@ -744,14 +690,14 @@ class _FeedScreenState extends State<FeedScreen> {
                     const SizedBox(width: 6),
                     Text("${post.like_count}",
                         style:
-                            const TextStyle(color: Colors.grey, fontSize: 13))
+                        const TextStyle(color: Colors.grey, fontSize: 13))
                   ]
                 ]),
                 InkWell(
                     onTap: () => _handlePostClick(post),
                     child: Text("${post.comment_count ?? 0} Comments",
                         style:
-                            const TextStyle(color: Colors.grey, fontSize: 13))),
+                        const TextStyle(color: Colors.grey, fontSize: 13))),
               ],
             ),
           ),
@@ -789,8 +735,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _actionButton(
       {required IconData icon,
-      required String label,
-      required VoidCallback onTap}) {
+        required String label,
+        required VoidCallback onTap}) {
     return _FeedbackButton(
         onTap: onTap, child: _actionButtonContent(icon, label));
   }
@@ -810,33 +756,6 @@ class _FeedScreenState extends State<FeedScreen> {
                 fontSize: 14))
       ]),
     );
-  }
-
-  Widget _buildAdContainer(AdType type,
-      {required double height, bool isSidebar = false}) {
-    if (_showDemoAds) {
-      return Container(
-        height: height,
-        width: double.infinity,
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300)),
-        child: Center(
-            child:
-                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.public, color: Colors.blueAccent),
-          Text(isSidebar ? "Sponsored" : "Advertisement")
-        ])),
-      );
-    }
-    return Container(
-        height: height,
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        color: Colors.white,
-        child: SimpleAdWidget(type: type));
   }
 
   Widget _buildEmptyState() => const Padding(

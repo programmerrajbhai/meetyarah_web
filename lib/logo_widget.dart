@@ -1,43 +1,42 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-class LarabookLogo extends StatefulWidget {
+class MeetyarahLogo extends StatefulWidget {
   final double size;
-  final Color backgroundColor;
-  final Color iconColor;
-  final bool animate; // Toggle animation
+  final bool animate;
 
-  const LarabookLogo({
+  const MeetyarahLogo({
     Key? key,
-    this.size = 100,
-    this.backgroundColor = const Color(0xFF1877F2), // Classic Social Blue
-    this.iconColor = Colors.white,
+    this.size = 120,
     this.animate = true,
   }) : super(key: key);
 
   @override
-  State<LarabookLogo> createState() => _LarabookLogoState();
+  State<MeetyarahLogo> createState() => _MeetyarahLogoState();
 }
 
-class _LarabookLogoState extends State<LarabookLogo> with TickerProviderStateMixin {
-  late AnimationController _controller;
+class _MeetyarahLogoState extends State<MeetyarahLogo> with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _shimmerController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
 
-    if (widget.animate) {
-      _controller.repeat();
-    }
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pulseController.dispose();
+    _shimmerController.dispose();
     super.dispose();
   }
 
@@ -46,161 +45,98 @@ class _LarabookLogoState extends State<LarabookLogo> with TickerProviderStateMix
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // The Main Logo Icon
-        Container(
-          width: widget.size,
-          height: widget.size,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.backgroundColor,
-                widget.backgroundColor.withOpacity(0.8),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(widget.size * 0.22),
-            boxShadow: [
-              BoxShadow(
-                color: widget.backgroundColor.withOpacity(0.4),
-                blurRadius: widget.size * 0.2,
-                offset: Offset(0, widget.size * 0.1),
+        AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            return Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(widget.size * 0.25),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2962FF), Color(0xFF0091EA)],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2962FF).withOpacity(0.4 + (_pulseController.value * 0.2)),
+                    blurRadius: 15 + (_pulseController.value * 10),
+                    spreadRadius: 2 + (_pulseController.value * 3),
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Center(
-            child: CustomPaint(
-              size: Size(widget.size * 0.55, widget.size * 0.55),
-              painter: _LogoPainter(color: widget.iconColor),
-            ),
-          ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedBuilder(
+                    animation: _shimmerController,
+                    builder: (context, child) {
+                      return ShaderMask(
+                        shaderCallback: (bounds) {
+                          return LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            stops: [
+                              _shimmerController.value - 0.4,
+                              _shimmerController.value,
+                              _shimmerController.value + 0.4,
+                            ],
+                            colors: [
+                              Colors.white,
+                              const Color(0xFFE3F2FD),
+                              Colors.white,
+                            ],
+                          ).createShader(bounds);
+                        },
+                        child: CustomPaint(
+                          size: Size(widget.size * 0.55, widget.size * 0.55),
+                          painter: _MeetyarahPainter(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
         ),
-
-        // The "Loading" Dots (Blinking effect)
-        if (widget.animate) ...[
-          SizedBox(height: widget.size * 0.15),
-          SizedBox(
-            width: widget.size * 0.6,
-            height: widget.size * 0.15,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(3, (index) {
-                return _BlinkingDot(
-                  controller: _controller,
-                  index: index,
-                  color: widget.backgroundColor,
-                  size: widget.size * 0.12,
-                );
-              }),
-            ),
-          ),
-        ],
       ],
     );
   }
 }
 
-// Painter for the "L" Book Shape
-class _LogoPainter extends CustomPainter {
-  final Color color;
-
-  _LogoPainter({required this.color});
-
+class _MeetyarahPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = color
+      ..color = Colors.white
       ..style = PaintingStyle.fill
-      ..strokeCap = StrokeCap.round; // Smooth edges
+      ..strokeCap = StrokeCap.round;
 
     final Path path = Path();
+    final double w = size.width;
+    final double h = size.height;
 
-    // Modern, fluid "L" shape
-    // Start top of vertical bar
-    path.moveTo(size.width * 0.25, 0);
-
-    // Draw down
-    path.lineTo(size.width * 0.25, size.height * 0.85);
-
-    // Curve for the bottom page
-    path.quadraticBezierTo(
-        size.width * 0.25, size.height, // Control point
-        size.width * 0.45, size.height  // End point
-    );
-
-    // Bottom line extending right
-    path.lineTo(size.width, size.height);
-
-    // Right edge going up slightly (perspective)
-    path.lineTo(size.width, size.height * 0.75);
-
-    // Top line of bottom bar coming back left
-    path.lineTo(size.width * 0.45, size.height * 0.75);
-
-    // Inner curve connecting vertical and horizontal
-    path.quadraticBezierTo(
-        size.width * 0.40, size.height * 0.75,
-        size.width * 0.40, size.height * 0.60
-    );
-
-    // Back up the vertical bar
-    path.lineTo(size.width * 0.40, 0);
+    path.moveTo(0, h);
+    path.lineTo(0, h * 0.1);
+    path.quadraticBezierTo(0, 0, w * 0.2, h * 0.2);
+    path.lineTo(w * 0.5, h * 0.6);
+    path.lineTo(w * 0.8, h * 0.2);
+    path.quadraticBezierTo(w, 0, w, h * 0.1);
+    path.lineTo(w, h);
+    path.lineTo(w * 0.75, h);
+    path.lineTo(w * 0.75, h * 0.4);
+    path.lineTo(w * 0.5, h * 0.75);
+    path.lineTo(w * 0.25, h * 0.4);
+    path.lineTo(w * 0.25, h);
     path.close();
 
+    canvas.drawShadow(path, Colors.black.withOpacity(0.3), 4.0, true);
     canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// Widget for a single blinking dot
-class _BlinkingDot extends StatelessWidget {
-  final AnimationController controller;
-  final int index;
-  final Color color;
-  final double size;
-
-  const _BlinkingDot({
-    required this.controller,
-    required this.index,
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Stagger the animation based on index (0, 1, 2)
-    final double start = index * 0.2;
-    final double end = start + 0.4;
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        // Create an opacity curve for blinking effect
-        final double opacity = _getOpacity(controller.value, start, end);
-
-        return Opacity(
-          opacity: opacity,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  double _getOpacity(double value, double start, double end) {
-    if (value >= start && value <= end) {
-      // Sine wave for smooth fade in/out
-      double t = (value - start) / (end - start);
-      return 0.3 + 0.7 * math.sin(t * math.pi);
-    }
-    return 0.3; // Resting opacity
-  }
 }

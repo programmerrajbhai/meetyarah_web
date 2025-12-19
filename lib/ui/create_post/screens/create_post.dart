@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meetyarah/ui/create_post/controllers/create_post_controller.dart';
 import 'package:meetyarah/ui/login_reg_screens/controllers/auth_service.dart';
-import 'package:meetyarah/ui/login_reg_screens/model/user_model.dart'; // UserModel ইমপোর্ট করা হলো
+import 'package:meetyarah/ui/login_reg_screens/model/user_model.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -19,10 +19,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final AuthService _authService = Get.find<AuthService>();
   final ImagePicker _picker = ImagePicker();
 
-  // লোকাল মিডিয়া লিস্ট (ছবি/ভিডিও রাখার জন্য)
   final List<XFile> _mediaList = [];
 
-  // ছবি পিক করার ফাংশন
   Future<void> _pickImages() async {
     final List<XFile> pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles.isNotEmpty) {
@@ -32,10 +30,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  // ভিডিও পিক করার ফাংশন
   Future<void> _pickVideo() async {
     final XFile? pickedFile =
-        await _picker.pickVideo(source: ImageSource.gallery);
+    await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _mediaList.add(pickedFile);
@@ -43,7 +40,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  // মিডিয়া রিমুভ করার ফাংশন
   void _removeMedia(int index) {
     setState(() {
       _mediaList.removeAt(index);
@@ -52,7 +48,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ ফিক্স: userSession এর বদলে user.value এবং Map এর বদলে Model ব্যবহার
     final UserModel? user = _authService.user.value;
     String userName = user?.full_name ?? user?.username ?? "User";
     String? profilePic = user?.profile_picture_url;
@@ -72,7 +67,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
-          // পোস্ট বাটন
           Obx(() {
             return Padding(
               padding: const EdgeInsets.only(right: 12.0),
@@ -80,9 +74,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 onPressed: controller.isLoading.value
                     ? null
                     : () {
-                        // কন্ট্রোলারে ছবি পাঠিয়ে পোস্ট করা হচ্ছে
-                        controller.createPost(images: _mediaList);
-                      },
+                  controller.createPost(images: _mediaList);
+                },
                 style: TextButton.styleFrom(
                   backgroundColor: controller.isLoading.value
                       ? Colors.grey[300]
@@ -93,13 +86,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
                 child: controller.isLoading.value
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
                     : const Text("POST",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             );
           }),
@@ -119,10 +112,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       CircleAvatar(
                         radius: 22,
                         backgroundImage:
-                            (profilePic != null && profilePic.isNotEmpty)
-                                ? NetworkImage(profilePic)
-                                : const NetworkImage(
-                                    "https://i.pravatar.cc/150?img=12"),
+                        (profilePic != null && profilePic.isNotEmpty)
+                            ? NetworkImage(profilePic)
+                            : const NetworkImage(
+                            "https://i.pravatar.cc/150?img=12"),
                       ),
                       const SizedBox(width: 12),
                       Column(
@@ -157,10 +150,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
                   const SizedBox(height: 20),
 
-                  // 2. টেক্সট ইনপুট এরিয়া
+                  // 2. টেক্সট ইনপুট এরিয়া
                   TextField(
                     controller: controller.postTitleCtrl,
-                    maxLines: null, // অটো হাইট বাড়বে
+                    maxLines: null,
                     decoration: const InputDecoration(
                       hintText: "What's on your mind?",
                       border: InputBorder.none,
@@ -171,13 +164,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
                   const SizedBox(height: 20),
 
-                  // 3. মিডিয়া প্রিভিউ (ছবি/ভিডিও)
+                  // 3. মিডিয়া প্রিভিউ (ছবি/ভিডিও)
                   if (_mediaList.isNotEmpty)
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
+                      const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
@@ -194,7 +187,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                   image: kIsWeb
                                       ? NetworkImage(_mediaList[index].path)
                                       : FileImage(File(_mediaList[index].path))
-                                          as ImageProvider,
+                                  as ImageProvider,
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -223,7 +216,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
           ),
 
-          // 4. বটম অ্যাকশন বার (মিডিয়া + সেটিংস)
+          // 4. বটম অ্যাকশন বার (শুধুমাত্র মিডিয়া বাটনগুলো রাখা হয়েছে)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
@@ -236,50 +229,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     offset: const Offset(0, -2))
               ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Direct Link Switch
-                Obx(() => SwitchListTile(
-                      title: const Text("Enable Direct Link Ad",
-                          style: TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: const Text(
-                          "This post will open a direct link when clicked",
-                          style: TextStyle(fontSize: 12)),
-                      value: controller.isDirectLink.value,
-                      activeColor: Colors.blue,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) {
-                        controller.isDirectLink.value = val;
-                      },
-                    )),
-
-                const Divider(),
-
-                // Media Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _pickImages,
-                      icon:
-                          const Icon(Icons.photo_library, color: Colors.green),
-                      label: const Text("Photo",
-                          style: TextStyle(color: Colors.black87)),
-                    ),
-                    TextButton.icon(
-                      onPressed: _pickVideo, // ভিডিও পিকার
-                      icon: const Icon(Icons.video_call, color: Colors.red),
-                      label: const Text("Video",
-                          style: TextStyle(color: Colors.black87)),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.camera_alt, color: Colors.blue),
-                      label: const Text("Camera",
-                          style: TextStyle(color: Colors.black87)),
-                    ),
-                  ],
+                TextButton.icon(
+                  onPressed: _pickImages,
+                  icon: const Icon(Icons.photo_library, color: Colors.green),
+                  label: const Text("Photo",
+                      style: TextStyle(color: Colors.black87)),
+                ),
+                TextButton.icon(
+                  onPressed: _pickVideo,
+                  icon: const Icon(Icons.video_call, color: Colors.red),
+                  label: const Text("Video",
+                      style: TextStyle(color: Colors.black87)),
+                ),
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.camera_alt, color: Colors.blue),
+                  label: const Text("Camera",
+                      style: TextStyle(color: Colors.black87)),
                 ),
               ],
             ),

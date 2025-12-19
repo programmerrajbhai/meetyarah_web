@@ -8,6 +8,8 @@ import 'package:meetyarah/ui/home/screens/feed_screen.dart' hide ReelScreens;
 import 'package:meetyarah/ui/menu_list/screens/menu_item_screens.dart';
 import 'package:meetyarah/ui/profile/screens/profile_screens.dart';
 import '../../reels/screens/reel_screens.dart';
+// ✅ লোগো ইমপোর্ট করা হলো
+import '../../../logo_widget.dart';
 
 class Basescreens extends StatefulWidget {
   const Basescreens({super.key});
@@ -19,19 +21,27 @@ class Basescreens extends StatefulWidget {
 class _BasescreensState extends State<Basescreens> {
   int _selectedIndex = 0;
 
-  // ✅ FIX: Getter ব্যবহার করা হয়েছে যাতে Null Error না আসে
   List<Widget> get _pages => [
     const FeedScreen(),
     const ReelScreens(),
-    const CreatePostScreen(),
+    const SizedBox(), // ✅ Create Post এখন আলাদা ওপেন হবে, তাই এখানে খালি রাখা হলো
     const ActivityDashboardScreens(),
     MenuScreen(),
   ];
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    // ✅ ফিক্স: ৩ নম্বর বাটন (Create) ক্লিক করলে ট্যাব চেঞ্জ না করে নতুন পেজ ওপেন হবে
+    if (index == 2) {
+      Get.to(
+            () => const CreatePostScreen(),
+        transition: Transition.downToUp, // সুন্দর নিচ থেকে উপরে আসার অ্যানিমেশন
+        duration: const Duration(milliseconds: 300),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override
@@ -46,14 +56,24 @@ class _BasescreensState extends State<Basescreens> {
         backgroundColor: Colors.white,
         elevation: 0,
         titleSpacing: isWebDesktop ? 30 : 20,
-        title: Text(
-          "LaraaBook",
-          style: GoogleFonts.bebasNeue(
-            fontSize: 34,
-            fontWeight: FontWeight.w500,
-            color: ColorPath.deepBlue,
-            letterSpacing: 2,
-          ),
+        // ✅ লোগো এবং টেক্সট একসাথে দেখানোর জন্য Row ব্যবহার করা হয়েছে
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ✅ আপনার কাস্টম লোগো (ছোট সাইজে)
+            const MeetyarahLogo(size: 40, animate: true),
+            const SizedBox(width: 12),
+            // ✅ ব্র্যান্ড নেম আপডেট
+            Text(
+              "Meetyarah",
+              style: GoogleFonts.bebasNeue(
+                fontSize: 28,
+                fontWeight: FontWeight.w500,
+                color: ColorPath.deepBlue,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
         ),
         actions: [
           _buildActionButton(Icons.search_rounded, () {}),
