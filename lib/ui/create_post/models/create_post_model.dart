@@ -10,8 +10,8 @@ class GetPostModel {
   int like_count;
   int comment_count;
   bool isLiked;
-  bool isDirectLink; // ✅ নতুন ফিল্ড
 
+  // ✅ Direct Link ফিল্ড রিমুভ করা হয়েছে
   GetPostModel({
     this.post_id,
     this.post_content,
@@ -24,7 +24,6 @@ class GetPostModel {
     this.like_count = 0,
     this.comment_count = 0,
     this.isLiked = false,
-    this.isDirectLink = false, // ডিফল্ট False
   });
 
   factory GetPostModel.fromJson(Map<String, dynamic> json) {
@@ -40,9 +39,6 @@ class GetPostModel {
       like_count: int.tryParse(json['like_count'].toString()) ?? 0,
       comment_count: int.tryParse(json['comment_count'].toString()) ?? 0,
       isLiked: json['is_liked'] == true || json['is_liked'] == 1 || json['is_liked'] == "1",
-
-      // ✅ সার্ভার থেকে 'is_direct_link' রিড করা
-      isDirectLink: json['is_direct_link'] == 1 || json['is_direct_link'] == "1" || json['is_direct_link'] == true,
     );
   }
 

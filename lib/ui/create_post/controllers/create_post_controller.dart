@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart'; // kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,10 +13,18 @@ class CreatePostController extends GetxController {
   final TextEditingController postTitleCtrl = TextEditingController();
 
   var isLoading = false.obs;
-  var isDirectLink = false.obs;
-  String? directUrl;
+  var hasInput = false.obs;
 
   final AuthService _authService = Get.find<AuthService>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    // কিছু লিখলে বাটন অ্যাক্টিভ হবে
+    postTitleCtrl.addListener(() {
+      hasInput.value = postTitleCtrl.text.trim().isNotEmpty;
+    });
+  }
 
   Future<void> createPost({List<XFile>? images}) async {
     final String content = postTitleCtrl.text.trim();
@@ -27,50 +35,45 @@ class CreatePostController extends GetxController {
       return;
     }
 
-    if (content.isEmpty && (images == null || images.isEmpty)) {
-      Get.snackbar("Alert", "Write something or add an image.");
-      return;
-    }
-
     try {
       isLoading(true);
-      String? imageUrl;
 
+      // ✅ মাল্টিপার্ট রিকোয়েস্ট
+      var request = http.MultipartRequest('POST', Uri.parse(Urls.createPostApi));
+
+      // শুধুমাত্র প্রয়োজনীয় ডাটা পাঠানো হচ্ছে (Direct Link রিমুভড)
+      request.fields['user_id'] = userId;
+      request.fields['post_content'] = content;
+
+      // ছবি থাকলে তা ফাইলে যোগ করা
       if (images != null && images.isNotEmpty) {
-        imageUrl = await _uploadImage(images.first);
-        if (imageUrl == null) {
-          isLoading(false);
-          Get.snackbar("Error", "Image upload failed");
-          return;
+        XFile imageFile = images.first;
+
+        if (kIsWeb) {
+          var bytes = await imageFile.readAsBytes();
+          request.files.add(
+              http.MultipartFile.fromBytes('image', bytes, filename: imageFile.name)
+          );
+        } else {
+          request.files.add(
+              await http.MultipartFile.fromPath('image', imageFile.path)
+          );
         }
       }
 
-      // ✅ যদি Direct Link অন থাকে, hidden URL সেট করো
-      if (isDirectLink.value) {
-        directUrl = "https://otieu.com/4/10229034";
-      } else {
-        directUrl = null;
-      }
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
-      var response = await http.post(
-        Uri.parse(Urls.createPostApi),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "user_id": userId,
-          "post_content": content,
-          "image_url": imageUrl,
-          "is_direct_link": isDirectLink.value ? 1 : 0,
-          "direct_url": directUrl, // ✅ নতুন ফিল্ড
-        }),
-      );
+      print("Server Response: ${response.body}");
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == 'success') {
-        Get.snackbar("Success", "Post created successfully!");
+        Get.snackbar("Success", "Post created successfully!",
+            backgroundColor: Colors.green, colorText: Colors.white);
+
         postTitleCtrl.clear();
-        isDirectLink.value = false;
-        directUrl = null;
+        hasInput.value = false;
 
         if (Get.isRegistered<GetPostController>()) {
           Get.find<GetPostController>().getAllPost();
@@ -80,40 +83,12 @@ class CreatePostController extends GetxController {
       } else {
         Get.snackbar("Error", data['message'] ?? "Failed to create post");
       }
+
     } catch (e) {
       print("Create Post Error: $e");
       Get.snackbar("Error", "Something went wrong");
     } finally {
       isLoading(false);
-    }
-  }
-
-  Future<String?> _uploadImage(XFile xfile) async {
-    try {
-      var request =
-          http.MultipartRequest('POST', Uri.parse(Urls.uploadImageApi));
-
-      if (kIsWeb) {
-        var bytes = await xfile.readAsBytes();
-        request.files.add(
-            http.MultipartFile.fromBytes('image', bytes, filename: xfile.name));
-      } else {
-        request.files
-            .add(await http.MultipartFile.fromPath('image', xfile.path));
-      }
-
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body);
-        if (json != null && json['status'] == 'success') {
-          return json['image_url'];
-        }
-      }
-      return null;
-    } catch (e) {
-      return null;
     }
   }
 }
