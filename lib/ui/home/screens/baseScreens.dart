@@ -6,10 +6,11 @@ import 'package:meetyarah/ui/create_post/screens/create_post.dart';
 import 'package:meetyarah/ui/dashboard/screens/dashboard_screens.dart';
 import 'package:meetyarah/ui/home/screens/feed_screen.dart' hide ReelScreens;
 import 'package:meetyarah/ui/menu_list/screens/menu_item_screens.dart';
-import 'package:meetyarah/ui/profile/screens/profile_screens.dart';
+import '../../notifications/screens/notification_screens.dart';
 import '../../reels/screens/reel_screens.dart';
-// ✅ লোগো ইমপোর্ট করা হলো
 import '../../../logo_widget.dart';
+
+import 'package:meetyarah/ui/search/screens/search_screen.dart';
 
 class Basescreens extends StatefulWidget {
   const Basescreens({super.key});
@@ -24,17 +25,16 @@ class _BasescreensState extends State<Basescreens> {
   List<Widget> get _pages => [
     const FeedScreen(),
     const ReelScreens(),
-    const SizedBox(), // ✅ Create Post এখন আলাদা ওপেন হবে, তাই এখানে খালি রাখা হলো
+    const SizedBox(),
     const ActivityDashboardScreens(),
     MenuScreen(),
   ];
 
   void _onItemTapped(int index) {
-    // ✅ ফিক্স: ৩ নম্বর বাটন (Create) ক্লিক করলে ট্যাব চেঞ্জ না করে নতুন পেজ ওপেন হবে
     if (index == 2) {
       Get.to(
             () => const CreatePostScreen(),
-        transition: Transition.downToUp, // সুন্দর নিচ থেকে উপরে আসার অ্যানিমেশন
+        transition: Transition.downToUp,
         duration: const Duration(milliseconds: 300),
       );
     } else {
@@ -56,14 +56,11 @@ class _BasescreensState extends State<Basescreens> {
         backgroundColor: Colors.white,
         elevation: 0,
         titleSpacing: isWebDesktop ? 30 : 20,
-        // ✅ লোগো এবং টেক্সট একসাথে দেখানোর জন্য Row ব্যবহার করা হয়েছে
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ আপনার কাস্টম লোগো (ছোট সাইজে)
             const MeetyarahLogo(size: 40, animate: true),
             const SizedBox(width: 12),
-            // ✅ ব্র্যান্ড নেম আপডেট
             Text(
               "Meetyarah",
               style: GoogleFonts.bebasNeue(
@@ -76,9 +73,17 @@ class _BasescreensState extends State<Basescreens> {
           ],
         ),
         actions: [
-          _buildActionButton(Icons.search_rounded, () {}),
+          _buildActionButton(Icons.search_rounded, () {
+            Get.to(() => const SearchScreen(), transition: Transition.cupertino);
+          }),
           const SizedBox(width: 10),
-          _buildActionButton(Icons.forum_rounded, () {}, isNotification: true),
+
+          // ✅ ২. নোটিফিকেশন বাটন আপডেট করা হলো
+          _buildActionButton(Icons.notifications, () {
+            // নোটিফিকেশন স্ক্রিন ওপেন হবে
+            Get.to(() => const NotificationScreen(), transition: Transition.cupertino);
+          }, isNotification: true),
+
           SizedBox(width: isWebDesktop ? 30 : 15),
         ],
       ),
@@ -119,6 +124,8 @@ class _BasescreensState extends State<Basescreens> {
       ),
     );
   }
+
+  // ... বাকি অংশ (Web Layout, Button Helper, Nav Items) আগের মতোই থাকবে ...
 
   Widget _buildWebLayout() {
     return Row(

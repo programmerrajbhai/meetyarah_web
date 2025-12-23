@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http; // http প্যাকেজ নাম ঠিক করা হয়েছে
+import 'package:http/http.dart' as http;
 import 'package:get/get.dart' hide Response;
 import '../../ui/login_reg_screens/controllers/auth_service.dart';
 
@@ -18,16 +18,15 @@ class networkResponse {
 }
 
 class networkClient {
-  // --- হেডার তৈরি (Token + Content Type) ---
+  // --- ১. হেডার তৈরি (Token + Content Type) ---
   static Map<String, String> _getHeaders() {
-    // 1. বেসিক হেডার
     final Map<String, String> headers = {
       "Content-Type": "application/json",
-      "Accept": "application/json", // PHP-র জন্য এটি জরুরি
-      "Access-Control-Allow-Origin": "*", // ওয়েবের জন্য সেফটি
+      "Accept": "application/json",
+      "Access-Control-Allow-Origin": "*",
     };
 
-    // 2. টোকেন যুক্ত করা (যদি থাকে)
+    // টোকেন যুক্ত করা (যদি থাকে)
     try {
       if (Get.isRegistered<AuthService>()) {
         final AuthService authService = Get.find<AuthService>();
@@ -41,16 +40,16 @@ class networkClient {
     return headers;
   }
 
-  // --- GET Request ---
+  // --- ২. GET Request ---
   static Future<networkResponse> getRequest({required String url}) async {
     try {
-      print("GET Request URL: $url"); // ডিবাগিং এর জন্য
+      print("GET Request URL: $url");
       Uri uri = Uri.parse(url);
 
       http.Response response = await http.get(uri, headers: _getHeaders());
 
       print("Status Code: ${response.statusCode}");
-      print("Response Body: ${response.body}");
+      // print("Response Body: ${response.body}"); // বেশি ডাটা হলে ল্যাগ করতে পারে, তাই কমেন্ট আউট করা ভালো
 
       if (response.statusCode == 200) {
         final decodedJson = jsonDecode(response.body);
@@ -72,14 +71,14 @@ class networkClient {
     }
   }
 
-  // --- POST Request ---
+  // --- ৩. POST Request (JSON Body) ---
   static Future<networkResponse> postRequest({
     required String url,
     required Map<String, dynamic>? body,
   }) async {
     try {
       print("POST Request URL: $url");
-      print("Request Body: $body");
+      // print("Request Body: $body");
 
       Uri uri = Uri.parse(url);
 
@@ -88,6 +87,63 @@ class networkClient {
         headers: _getHeaders(),
         body: jsonEncode(body),
       );
+
+      print("Status Code: ${response.statusCode}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedJson = jsonDecode(response.body);
+        return networkResponse(
+          isSuccess: true,
+          data: decodedJson,
+          statusCode: response.statusCode,
+        );
+      } else {
+        String msg = "Request Failed";
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded['message'] != null) msg = decoded['message'];
+        } catch (_) {}
+
+        return networkResponse(
+            isSuccess: false,
+            errorMessage: msg,
+            statusCode: response.statusCode
+        );
+      }
+    } catch (e) {
+      print("Network Error: $e");
+      return networkResponse(isSuccess: false, errorMessage: e.toString(), statusCode: -1);
+    }
+  }
+
+  // --- ৪. Multipart Request (ছবি আপলোডের জন্য) ---
+  static Future<networkResponse> multipartRequest({
+    required String url,
+    required Map<String, String> fields, // টেক্সট ডাটা (যেমন: নাম, বায়ো)
+    required String? imagePath, // গ্যালারি থেকে নেওয়া ছবির পাথ
+    required String imageKey,   // API তে ছবির key (যেমন: 'profile_image' বা 'story_image')
+  }) async {
+    try {
+      print("Multipart Request URL: $url");
+
+      Uri uri = Uri.parse(url);
+      var request = http.MultipartRequest('POST', uri);
+
+      // হেডার যুক্ত করা (Token সহ)
+      request.headers.addAll(_getHeaders());
+
+      // টেক্সট ফিল্ডগুলো যুক্ত করা
+      request.fields.addAll(fields);
+
+      // ছবি যুক্ত করা (যদি ছবি থাকে)
+      if (imagePath != null && imagePath.isNotEmpty) {
+        var multipartFile = await http.MultipartFile.fromPath(imageKey, imagePath);
+        request.files.add(multipartFile);
+      }
+
+      // সার্ভারে পাঠানো
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
       print("Status Code: ${response.statusCode}");
       print("Response Body: ${response.body}");
@@ -100,17 +156,10 @@ class networkClient {
           statusCode: response.statusCode,
         );
       } else {
-        // এরর মেসেজ হ্যান্ডলিং
-        String msg = "Request Failed";
-        try {
-          final decoded = jsonDecode(response.body);
-          if (decoded['message'] != null) msg = decoded['message'];
-        } catch (_) {}
-
         return networkResponse(
-            isSuccess: false,
-            errorMessage: msg,
-            statusCode: response.statusCode
+          isSuccess: false,
+          errorMessage: "Upload Failed. Code: ${response.statusCode}",
+          statusCode: response.statusCode,
         );
       }
     } catch (e) {

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:meetyarah/ui/create_post/screens/create_post.dart';
 import 'package:meetyarah/ui/view_post/screens/post_details.dart';
-
-import '../controllers/profile_controllers.dart'; // ডিটেইলস পেজ
+import '../../edit_profile/screens/edit_profile_screens.dart';
+import '../controllers/profile_controllers.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // কন্ট্রোলার লোড করি
+    // কন্ট্রোলার লোড
     final ProfileController controller = Get.put(ProfileController());
 
     return Scaffold(
@@ -26,17 +26,16 @@ class ProfilePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add_box_outlined, color: Colors.black),
             onPressed: () {
-              Get.to(CreatePostScreen());
+              Get.to(() => const CreatePostScreen());
             },
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
-            onPressed: controller.logout, // লগআউট বাটন
+            onPressed: controller.logout,
           ),
         ],
       ),
       body: Obx(() {
-        // লোডিং হলে স্পিনার দেখাবে
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -48,7 +47,7 @@ class ProfilePage extends StatelessWidget {
               return [
                 SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildProfileHeader(controller), // হেডার উইজেট
+                    _buildProfileHeader(controller),
                   ]),
                 ),
               ];
@@ -67,8 +66,8 @@ class ProfilePage extends StatelessWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _buildPostsGrid(controller), // ১. পোস্ট গ্রিড
-                      const Center(child: Text("Tagged Photos")), // ২. ট্যাগ (খালি)
+                      _buildPostsGrid(controller),
+                      const Center(child: Text("Tagged Photos (Coming Soon)")),
                     ],
                   ),
                 ),
@@ -83,7 +82,6 @@ class ProfilePage extends StatelessWidget {
   // --- ১. প্রোফাইল হেডার ---
   Widget _buildProfileHeader(ProfileController controller) {
     final user = controller.profileUser.value;
-    // পোস্ট সংখ্যা লিস্টের সাইজ থেকে নিচ্ছি
     final postCount = controller.myPosts.length.toString();
 
     return Padding(
@@ -93,7 +91,7 @@ class ProfilePage extends StatelessWidget {
         children: [
           Row(
             children: [
-              // প্রোফাইল ছবি (API থেকে)
+              // প্রোফাইল ছবি
               Container(
                 width: 86,
                 height: 86,
@@ -102,7 +100,9 @@ class ProfilePage extends StatelessWidget {
                   shape: BoxShape.circle,
                   image: DecorationImage(
                     image: NetworkImage(
-                        user?.profilePictureUrl ?? "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                        (user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty)
+                            ? user.profilePictureUrl!
+                            : "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                     ),
                     fit: BoxFit.cover,
                   ),
@@ -111,14 +111,14 @@ class ProfilePage extends StatelessWidget {
               ),
               const SizedBox(width: 20),
 
-              // স্ট্যাটস (Posts রিয়েল, বাকিগুলো ডামি)
+              // স্ট্যাটস
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStatColumn(postCount, "Posts"),
-                    _buildStatColumn("0", "Followers"), // API তে নেই, তাই 0
-                    _buildStatColumn("0", "Following"), // API তে নেই, তাই 0
+                    _buildStatColumn("0", "Followers"),
+                    _buildStatColumn("0", "Following"),
                   ],
                 ),
               ),
@@ -126,16 +126,22 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // নাম এবং বায়ো
+          // নাম
           Text(
             user?.fullName ?? "Name",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
+
           const SizedBox(height: 4),
-          const Text(
-            "Flutter Developer 💙\nWelcome to my profile!", // বায়ো (স্ট্যাটিক)
-            style: TextStyle(fontSize: 14),
+
+          // ✅ বায়ো (এখন আর এরর আসবে না)
+          Text(
+            (user?.bio != null && user!.bio!.isNotEmpty)
+                ? user.bio!
+                : "No bio available",
+            style: const TextStyle(fontSize: 14),
           ),
+
           const SizedBox(height: 16),
 
           // এডিট বাটন
@@ -143,7 +149,9 @@ class ProfilePage extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Get.to(() => const EditProfileScreen(), transition: Transition.rightToLeft);
+                  },
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     side: const BorderSide(color: Colors.grey),
@@ -158,7 +166,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // স্ট্যাটস হেল্পার
   Widget _buildStatColumn(String count, String label) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -175,11 +182,12 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // --- ২. পোস্ট গ্রিড ---
   Widget _buildPostsGrid(ProfileController controller) {
-    // যদি কোনো পোস্ট না থাকে
     if (controller.myPosts.isEmpty) {
-      return const Center(child: Text("No posts yet"));
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Text("No posts yet"),
+      ));
     }
 
     return GridView.builder(
@@ -196,14 +204,13 @@ class ProfilePage extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            // ইমেজে ক্লিক করলে ডিটেইলস পেজে যাবে
             Get.to(() => PostDetailPage(post: post));
           },
           child: Container(
             color: Colors.grey[200],
             child: post.image_url != null
                 ? Image.network(post.image_url!, fit: BoxFit.cover)
-                : const Center(child: Icon(Icons.text_fields, color: Colors.grey)),
+                : const Center(child: Icon(Icons.image, color: Colors.grey)),
           ),
         );
       },

@@ -9,11 +9,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 // ✅ ক্লিন ইমপোর্টস (Adsterra এবং AdBlock রিমুভ করা হয়েছে)
 import '../../reels/screens/reel_screens.dart'; // Contains FacebookVideoCard & VideoDataHelper
+
 import '../controllers/get_post_controllers.dart';
 import '../controllers/like_controller.dart';
 import '../../view_post/screens/post_details.dart';
 import '../../create_post/screens/create_post.dart';
 import '../widgets/like_button.dart';
+import '../widgets/story_list_widget.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -384,7 +386,9 @@ class _FeedScreenState extends State<FeedScreen> {
                         padding: const EdgeInsets.only(bottom: 50),
                         children: [
                           _buildCreatePostBox(),
-                          _buildStorySection(),
+
+
+                          const StoryListWidget(), // ✅ এখানে স্টোরি বার বসানো হলো
 
                           // ✅ PINNED VIDEO SECTION (If URL is ?post_id=...)
                           if (_pinnedVideo != null) ...[

@@ -3,6 +3,7 @@ class ProfileUserModel {
   final String username;
   final String fullName;
   final String? profilePictureUrl;
+  final String? bio; // ✅ ১. এখানে ভেরিয়েবল হিসেবে ডিক্লেয়ার করুন
   final String createdAt;
 
   ProfileUserModel({
@@ -10,21 +11,19 @@ class ProfileUserModel {
     required this.username,
     required this.fullName,
     this.profilePictureUrl,
+    this.bio,
     required this.createdAt,
   });
 
-  // JSON থেকে মডেলে কনভার্ট করা (Safe Parsing)
+
   factory ProfileUserModel.fromJson(Map<String, dynamic> json) {
     return ProfileUserModel(
-      // int.parse দিয়ে নিশ্চিত করছি যে ID সবসময় int হবে
       userId: int.tryParse(json['user_id'].toString()) ?? 0,
 
       username: json['username']?.toString() ?? "Unknown",
       fullName: json['full_name']?.toString() ?? "Unknown",
-
-      // প্রোফাইল পিকচার null হতে পারে
       profilePictureUrl: json['profile_picture_url'],
-
+      bio: json['bio']?.toString(),
       createdAt: json['created_at']?.toString() ?? "",
     );
   }
