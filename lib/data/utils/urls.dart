@@ -1,5 +1,5 @@
 class Urls {
-  static const String _rootUrl = "https://meetyarah.com/api";
+  static const String _rootUrl = "http://localhost/api";
 
   static String loginApi = "$_rootUrl/login.php";
   static String registerApi = "$_rootUrl/register.php";
