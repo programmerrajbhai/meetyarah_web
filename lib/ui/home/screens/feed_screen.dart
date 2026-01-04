@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Clipboard
@@ -15,6 +16,7 @@ import '../controllers/like_controller.dart';
 import '../../view_post/screens/post_details.dart';
 import '../../create_post/screens/create_post.dart';
 import '../widgets/like_button.dart';
+import '../widgets/simple_video_player.dart';
 import '../widgets/story_list_widget.dart';
 
 class FeedScreen extends StatefulWidget {
@@ -611,6 +613,13 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
+
+// ২. হেল্পার ফাংশন (ক্লাসের ভেতরে বা বাইরে রাখতে পারেন)
+  bool isVideo(String url) {
+    String ext = url.split('.').last.toLowerCase();
+    return ['mp4', 'mov', 'avi', 'mkv', 'webm'].contains(ext);
+  }
+
   Widget _buildFacebookPostCard(dynamic post, int index) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -622,6 +631,7 @@ class _FeedScreenState extends State<FeedScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- Header Section ---
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -648,6 +658,8 @@ class _FeedScreenState extends State<FeedScreen> {
               ],
             ),
           ),
+
+          // --- Content Section ---
           InkWell(
             onTap: () => _handlePostClick(post),
             child: Column(
@@ -663,26 +675,38 @@ class _FeedScreenState extends State<FeedScreen> {
                               height: 1.4,
                               color: Colors.black87))),
                 const SizedBox(height: 8),
+
+                // ✅ PROFESSIONAL VIDEO PLAYER INTEGRATION
                 if (post.image_url != null && post.image_url!.isNotEmpty)
-                  Hero(
-                    tag: "post_image_${post.post_id}_$index", // Unique Tag fix
-                    child: Container(
-                      height: 400,
-                      width: double.infinity,
-                      decoration: BoxDecoration(color: Colors.grey[200]),
-                      child: Image.network(post.image_url!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, o, s) => Container(
-                              height: 400,
-                              color: Colors.grey[200],
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.broken_image,
-                                  color: Colors.grey, size: 50))),
+                  Container(
+                    width: double.infinity,
+                    height: 400, // ফিক্সড হাইট (ভিডিও এবং ইমেজের জন্য)
+                    decoration: const BoxDecoration(color: Colors.black),
+                    child: isVideo(post.image_url!)
+                        ? ClipRRect(
+                      child: SimpleVideoPlayer(videoUrl: post.image_url!),
+                    )
+                        : Hero(
+                      tag: "post_image_${post.post_id}_$index",
+                      child: CachedNetworkImage(
+                        imageUrl: post.image_url!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                            size: 50),
+                      ),
                     ),
                   ),
               ],
             ),
           ),
+
+          // --- Footer Section ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
@@ -706,6 +730,8 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
           const Divider(height: 0, thickness: 0.5),
+
+          // --- Action Buttons ---
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(

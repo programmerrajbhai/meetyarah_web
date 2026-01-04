@@ -35,7 +35,6 @@ dependencies:
   cached_network_image: ^3.4.1
 
 
-
   firebase_analytics: ^10.8.0
   firebase_core:
   timeago: ^3.6.1
