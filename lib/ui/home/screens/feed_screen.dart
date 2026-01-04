@@ -104,7 +104,7 @@ class _FeedScreenState extends State<FeedScreen> {
         if (targetPostId != null && targetPostId.isNotEmpty) {
           debugPrint("🔗 Video Deep Link Found: $targetPostId");
           int targetIndex =
-          videos.indexWhere((video) => video.url.contains(targetPostId));
+              videos.indexWhere((video) => video.url.contains(targetPostId));
 
           if (targetIndex != -1) {
             var foundVideo = videos.removeAt(targetIndex);
@@ -185,6 +185,8 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   // ✅ Regular Post Link Generator (Uses ?id=)
+
+
   String _getPostLink(String postId) {
     if (kIsWeb) {
       return "${Uri.base.origin}/?id=$postId";
@@ -253,9 +255,9 @@ class _FeedScreenState extends State<FeedScreen> {
                 }),
                 _shareOptionItem(
                     Icons.add_to_photos_rounded, "Share to Feed", Colors.orange,
-                        () {
-                      _handleAction(message: "Shared to your timeline! ✍️");
-                    }),
+                    () {
+                  _handleAction(message: "Shared to your timeline! ✍️");
+                }),
               ],
             ),
             const SizedBox(height: 20),
@@ -280,7 +282,7 @@ class _FeedScreenState extends State<FeedScreen> {
           const SizedBox(height: 8),
           Text(label,
               style:
-              const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -308,25 +310,25 @@ class _FeedScreenState extends State<FeedScreen> {
                 Icons.bookmark_border,
                 "Save Post",
                 "Add this to your saved items.",
-                    () => _handleAction(message: "Post saved to collection! 💾")),
+                () => _handleAction(message: "Post saved to collection! 💾")),
             _buildOptionTile(
                 Icons.visibility_off_outlined,
                 "Hide Post",
                 "See fewer posts like this.",
-                    () => _handleAction(message: "Post hidden from feed. 🙈")),
+                () => _handleAction(message: "Post hidden from feed. 🙈")),
             const Divider(),
             _buildOptionTile(
                 Icons.copy,
                 "Copy Link",
                 "Copy post url to clipboard.",
-                    () => _handleAction(
+                () => _handleAction(
                     message: "Link copied! 🔗",
                     action: () => _copyPostLink(post.post_id.toString()))),
             _buildOptionTile(
                 Icons.report_gmailerrorred,
                 "Report Post",
                 "I'm concerned about this post.",
-                    () => _handleAction(message: "Report submitted. Thanks! 🛡️"),
+                () => _handleAction(message: "Report submitted. Thanks! 🛡️"),
                 isDestructive: true),
             const SizedBox(height: 10),
           ],
@@ -342,7 +344,7 @@ class _FeedScreenState extends State<FeedScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration:
-        BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+            BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
         child: Icon(icon,
             color: isDestructive ? Colors.red : Colors.black87, size: 22),
       ),
@@ -353,7 +355,7 @@ class _FeedScreenState extends State<FeedScreen> {
               color: isDestructive ? Colors.red : Colors.black87)),
       subtitle: subtitle.isNotEmpty
           ? Text(subtitle,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]))
           : null,
       onTap: onTap,
     );
@@ -389,14 +391,13 @@ class _FeedScreenState extends State<FeedScreen> {
                         children: [
                           _buildCreatePostBox(),
 
-
                           const StoryListWidget(), // ✅ এখানে স্টোরি বার বসানো হলো
 
                           // ✅ PINNED VIDEO SECTION (If URL is ?post_id=...)
                           if (_pinnedVideo != null) ...[
                             Padding(
                               padding:
-                              const EdgeInsets.symmetric(vertical: 8.0),
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: Column(
                                 children: [
                                   Container(
@@ -405,7 +406,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                     decoration: BoxDecoration(
                                         color: Colors.green.withOpacity(0.1),
                                         borderRadius:
-                                        BorderRadius.circular(20)),
+                                            BorderRadius.circular(20)),
                                     child: const Text("Shared Video",
                                         style: TextStyle(
                                             color: Colors.green,
@@ -415,10 +416,10 @@ class _FeedScreenState extends State<FeedScreen> {
                                   const SizedBox(height: 8),
                                   FacebookVideoCard(
                                     key:
-                                    ValueKey("pinned_${_pinnedVideo!.url}"),
+                                        ValueKey("pinned_${_pinnedVideo!.url}"),
                                     videoData: _pinnedVideo!,
                                     allVideosList:
-                                    _feedVideos.map((e) => e.url).toList(),
+                                        _feedVideos.map((e) => e.url).toList(),
                                   ),
                                 ],
                               ),
@@ -429,7 +430,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           if (_pinnedPost != null) ...[
                             Padding(
                               padding:
-                              const EdgeInsets.symmetric(vertical: 8.0),
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: Column(
                                 children: [
                                   Container(
@@ -438,7 +439,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                     decoration: BoxDecoration(
                                         color: Colors.blue.withOpacity(0.1),
                                         borderRadius:
-                                        BorderRadius.circular(20)),
+                                            BorderRadius.circular(20)),
                                     child: const Text("Shared Post",
                                         style: TextStyle(
                                             color: Colors.blue,
@@ -471,13 +472,13 @@ class _FeedScreenState extends State<FeedScreen> {
                                     ((index + 1) ~/ 10) % _feedVideos.length;
                                 videoWidget = Padding(
                                   padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
+                                      const EdgeInsets.symmetric(vertical: 8.0),
                                   child: FacebookVideoCard(
                                     key: ValueKey(
                                         "feed_video_${_feedVideos[videoIndex].url}"),
                                     videoData: _feedVideos[videoIndex],
                                     allVideosList:
-                                    _feedVideos.map((e) => e.url).toList(),
+                                        _feedVideos.map((e) => e.url).toList(),
                                   ),
                                 );
                               }
@@ -534,14 +535,14 @@ class _FeedScreenState extends State<FeedScreen> {
             const CircleAvatar(
                 radius: 20,
                 backgroundImage:
-                NetworkImage("https://i.pravatar.cc/150?img=12")),
+                    NetworkImage("https://i.pravatar.cc/150?img=12")),
             const SizedBox(width: 10),
             Expanded(
               child: _FeedbackButton(
                 onTap: () => Get.to(() => const CreatePostScreen()),
                 child: Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                       color: const Color(0xFFF0F2F5),
                       borderRadius: BorderRadius.circular(25)),
@@ -559,60 +560,6 @@ class _FeedScreenState extends State<FeedScreen> {
       ),
     );
   }
-
-  Widget _buildStorySection() {
-    return Container(
-      height: 200,
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      color: kIsWeb ? Colors.transparent : Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 6,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: _FeedbackButton(
-              onTap: () {},
-              child: Container(
-                width: 110,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(
-                      image: NetworkImage(
-                          "https://picsum.photos/200/300?random=$index"),
-                      fit: BoxFit.cover),
-                ),
-                child: Stack(
-                  children: [
-                    Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.6),
-                                  Colors.transparent
-                                ]))),
-                    Positioned(
-                        bottom: 8,
-                        left: 8,
-                        child: Text(index == 0 ? "Add Story" : "User $index",
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13))),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
 
 // ২. হেল্পার ফাংশন (ক্লাসের ভেতরে বা বাইরে রাখতে পারেন)
   bool isVideo(String url) {
@@ -684,23 +631,25 @@ class _FeedScreenState extends State<FeedScreen> {
                     decoration: const BoxDecoration(color: Colors.black),
                     child: isVideo(post.image_url!)
                         ? ClipRRect(
-                      child: SimpleVideoPlayer(videoUrl: post.image_url!),
-                    )
+                            child: SimpleVideoPlayer(videoUrl: post.image_url!),
+                          )
                         : Hero(
-                      tag: "post_image_${post.post_id}_$index",
-                      child: CachedNetworkImage(
-                        imageUrl: post.image_url!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[200],
-                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        ),
-                        errorWidget: (context, url, error) => const Icon(
-                            Icons.broken_image,
-                            color: Colors.grey,
-                            size: 50),
-                      ),
-                    ),
+                            tag: "post_image_${post.post_id}_$index",
+                            child: CachedNetworkImage(
+                              imageUrl: post.image_url!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)),
+                              ),
+                              errorWidget: (context, url, error) => const Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey,
+                                  size: 50),
+                            ),
+                          ),
                   ),
               ],
             ),
@@ -718,14 +667,14 @@ class _FeedScreenState extends State<FeedScreen> {
                     const SizedBox(width: 6),
                     Text("${post.like_count}",
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 13))
+                            const TextStyle(color: Colors.grey, fontSize: 13))
                   ]
                 ]),
                 InkWell(
                     onTap: () => _handlePostClick(post),
                     child: Text("${post.comment_count ?? 0} Comments",
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 13))),
+                            const TextStyle(color: Colors.grey, fontSize: 13))),
               ],
             ),
           ),
@@ -765,8 +714,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _actionButton(
       {required IconData icon,
-        required String label,
-        required VoidCallback onTap}) {
+      required String label,
+      required VoidCallback onTap}) {
     return _FeedbackButton(
         onTap: onTap, child: _actionButtonContent(icon, label));
   }
