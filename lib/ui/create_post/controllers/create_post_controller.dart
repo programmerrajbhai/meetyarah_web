@@ -12,83 +12,126 @@ import '../../login_reg_screens/controllers/auth_service.dart';
 class CreatePostController extends GetxController {
   final TextEditingController postTitleCtrl = TextEditingController();
 
-  var isLoading = false.obs;
+  // ✅ Missing Variable Added
   var hasInput = false.obs;
+  var isLoading = false.obs;
+
+  // মিডিয়া সেলেকশন ভেরিয়েবল
+  Rx<XFile?> selectedImage = Rx<XFile?>(null);
+  Rx<XFile?> selectedVideo = Rx<XFile?>(null);
 
   final AuthService _authService = Get.find<AuthService>();
 
   @override
   void onInit() {
     super.onInit();
-    // কিছু লিখলে বাটন অ্যাক্টিভ হবে
+    // ✅ Listener added: টেক্সট লিখলে hasInput সত্য হবে
     postTitleCtrl.addListener(() {
       hasInput.value = postTitleCtrl.text.trim().isNotEmpty;
     });
   }
 
-  Future<void> createPost({List<XFile>? images}) async {
+  // পোস্ট ক্রিয়েট ফাংশন
+  Future<void> createPost() async {
     final String content = postTitleCtrl.text.trim();
-    final String? userId = _authService.userId;
+    final String token = _authService.token.value;
 
-    if (userId == null || userId.isEmpty) {
-      Get.snackbar("Error", "Please login again to post.");
+    if (token.isEmpty) {
+      Get.snackbar("Error", "Please login first.");
+      return;
+    }
+
+    // ভ্যালিডেশন: টেক্সট, ইমেজ বা ভিডিও—কিছু একটা থাকতেই হবে
+    if (content.isEmpty && selectedImage.value == null && selectedVideo.value == null) {
+      Get.snackbar("Warning", "Write something or add photo/video.");
       return;
     }
 
     try {
       isLoading(true);
 
-      // ✅ মাল্টিপার্ট রিকোয়েস্ট
       var request = http.MultipartRequest('POST', Uri.parse(Urls.createPostApi));
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'multipart/form-data',
+      });
 
-      // শুধুমাত্র প্রয়োজনীয় ডাটা পাঠানো হচ্ছে (Direct Link রিমুভড)
-      request.fields['user_id'] = userId;
-      request.fields['post_content'] = content;
+      request.fields['caption'] = content;
 
-      // ছবি থাকলে তা ফাইলে যোগ করা
-      if (images != null && images.isNotEmpty) {
-        XFile imageFile = images.first;
+      // --- লজিক: ইমেজ নাকি ভিডিও? ---
 
+      if (selectedImage.value != null) {
+        // ১. যদি ইমেজ থাকে -> 'image' ফিল্ডে পাঠাবো
+        XFile file = selectedImage.value!;
         if (kIsWeb) {
-          var bytes = await imageFile.readAsBytes();
-          request.files.add(
-              http.MultipartFile.fromBytes('image', bytes, filename: imageFile.name)
-          );
+          var bytes = await file.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes('image', bytes, filename: file.name));
         } else {
-          request.files.add(
-              await http.MultipartFile.fromPath('image', imageFile.path)
-          );
+          request.files.add(await http.MultipartFile.fromPath('image', file.path));
+        }
+
+      } else if (selectedVideo.value != null) {
+        // ২. যদি ভিডিও থাকে -> 'video' ফিল্ডে পাঠাবো
+        XFile file = selectedVideo.value!;
+        if (kIsWeb) {
+          var bytes = await file.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes('video', bytes, filename: file.name));
+        } else {
+          request.files.add(await http.MultipartFile.fromPath('video', file.path));
         }
       }
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
-      print("Server Response: ${response.body}");
+      print("Response: ${response.body}");
 
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          Get.snackbar("Success", "Post uploaded!", backgroundColor: Colors.green, colorText: Colors.white);
 
-      if (response.statusCode == 200 && data['status'] == 'success') {
-        Get.snackbar("Success", "Post created successfully!",
-            backgroundColor: Colors.green, colorText: Colors.white);
+          // সব ক্লিয়ার করে দেওয়া
+          postTitleCtrl.clear();
+          hasInput.value = false; // রিসেট
+          selectedImage.value = null;
+          selectedVideo.value = null;
 
-        postTitleCtrl.clear();
-        hasInput.value = false;
-
-        if (Get.isRegistered<GetPostController>()) {
-          Get.find<GetPostController>().getAllPost();
+          if (Get.isRegistered<GetPostController>()) {
+            Get.find<GetPostController>().getAllPost();
+          }
+          Get.offAll(() => const Basescreens());
+        } else {
+          Get.snackbar("Error", data['message'] ?? "Unknown Error");
         }
-
-        Get.offAll(() => const Basescreens());
       } else {
-        Get.snackbar("Error", data['message'] ?? "Failed to create post");
+        Get.snackbar("Error", "Server Error: ${response.statusCode}");
       }
-
     } catch (e) {
-      print("Create Post Error: $e");
-      Get.snackbar("Error", "Something went wrong");
+      print("Error: $e");
+      Get.snackbar("Error", "Check internet connection.");
     } finally {
       isLoading(false);
+    }
+  }
+
+  // --- UI থেকে কল করার ফাংশন ---
+
+  void pickImageFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      selectedImage.value = image;
+      selectedVideo.value = null; // ভিডিও থাকলে সরিয়ে দিব
+    }
+  }
+
+  void pickVideoFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      selectedVideo.value = video;
+      selectedImage.value = null; // ইমেজ থাকলে সরিয়ে দিব
     }
   }
 }

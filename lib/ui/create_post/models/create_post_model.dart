@@ -1,6 +1,6 @@
 class GetPostModel {
   String? post_id;
-  String? post_content;
+  String? caption; // নাম পরিবর্তন (আগে post_content ছিল)
   String? image_url;
   String? created_at;
   int? user_id;
@@ -11,10 +11,9 @@ class GetPostModel {
   int comment_count;
   bool isLiked;
 
-  // ✅ Direct Link ফিল্ড রিমুভ করা হয়েছে
   GetPostModel({
     this.post_id,
-    this.post_content,
+    this.caption,
     this.image_url,
     this.created_at,
     this.user_id,
@@ -29,7 +28,10 @@ class GetPostModel {
   factory GetPostModel.fromJson(Map<String, dynamic> json) {
     return GetPostModel(
       post_id: json['post_id']?.toString(),
-      post_content: json['post_content']?.toString(),
+
+      // ✅ এখানে caption অথবা post_content—যেকোনো একটা পেলেই কাজ করবে
+      caption: json['caption']?.toString() ?? json['post_content']?.toString(),
+
       image_url: json['image_url']?.toString(),
       created_at: json['created_at']?.toString(),
       user_id: _toInt(json['user_id']),

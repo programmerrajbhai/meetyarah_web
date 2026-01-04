@@ -16,35 +16,14 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
+  // আগের কন্ট্রোলারটিই ব্যবহার করা হচ্ছে
   final CreatePostController controller = Get.put(CreatePostController());
   final AuthService _authService = Get.find<AuthService>();
-  final ImagePicker _picker = ImagePicker();
 
-  final List<XFile> _mediaList = [];
-
-  Future<void> _pickImages() async {
-    final List<XFile> pickedFiles = await _picker.pickMultiImage();
-    if (pickedFiles.isNotEmpty) {
-      setState(() {
-        _mediaList.clear();
-        _mediaList.add(pickedFiles.first);
-        controller.hasInput.value = true;
-      });
-    }
-  }
-
-  Future<void> _pickVideo() async {
-    // ভিডিও ফিচার পরে অ্যাড করা হবে, আপাতত মেসেজ
-    Get.snackbar("Info", "Video upload coming soon!");
-  }
-
-  void _removeMedia(int index) {
-    setState(() {
-      _mediaList.removeAt(index);
-      if (_mediaList.isEmpty && controller.postTitleCtrl.text.isEmpty) {
-        controller.hasInput.value = false;
-      }
-    });
+  // মিডিয়া রিমুভ করার ফাংশন
+  void _removeMedia() {
+    controller.selectedImage.value = null;
+    controller.selectedVideo.value = null;
   }
 
   @override
@@ -55,6 +34,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // --- APP BAR ---
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -62,15 +43,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           icon: const Icon(Icons.close, color: Colors.black87, size: 28),
           onPressed: () => Get.back(),
         ),
-        title: Text("Create Post", style: GoogleFonts.inter(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text("Create Post",
+            style: GoogleFonts.inter(color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
           Obx(() {
-            bool isActive = controller.hasInput.value || _mediaList.isNotEmpty;
+            // ইনপুট চেক: টেক্সট আছে অথবা ইমেজ আছে অথবা ভিডিও আছে
+            bool hasMedia = controller.selectedImage.value != null || controller.selectedVideo.value != null;
+            bool isActive = controller.hasInput.value || hasMedia;
+
             return Padding(
               padding: const EdgeInsets.only(right: 16.0, top: 10, bottom: 10),
               child: ElevatedButton(
+                // এখানে সরাসরি controller.createPost() কল হবে (কোনো প্যারামিটার লাগবে না)
                 onPressed: (isActive && !controller.isLoading.value)
-                    ? () => controller.createPost(images: _mediaList)
+                    ? () => controller.createPost()
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1877F2),
@@ -86,6 +72,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           }),
         ],
       ),
+
+      // --- BODY ---
       body: Column(
         children: [
           Expanded(
@@ -93,6 +81,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
+                  // User Info Row
                   Row(
                     children: [
                       CircleAvatar(
@@ -105,7 +94,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       Text(userName, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
                     ],
                   ),
+
                   const SizedBox(height: 20),
+
+                  // Text Input
                   TextField(
                     controller: controller.postTitleCtrl,
                     maxLines: null,
@@ -115,46 +107,108 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     ),
                     style: const TextStyle(fontSize: 18),
                   ),
+
                   const SizedBox(height: 20),
-                  if (_mediaList.isNotEmpty)
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image(
-                            image: kIsWeb
-                                ? NetworkImage(_mediaList[0].path)
-                                : FileImage(File(_mediaList[0].path)) as ImageProvider,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
+
+                  // --- MEDIA PREVIEW SECTION (Updated for Image & Video) ---
+                  Obx(() {
+                    if (controller.selectedImage.value != null) {
+                      // ১. ইমেজ প্রিভিউ
+                      return _buildMediaPreview(
+                        child: kIsWeb
+                            ? Image.network(controller.selectedImage.value!.path, fit: BoxFit.cover, width: double.infinity)
+                            : Image.file(File(controller.selectedImage.value!.path), fit: BoxFit.cover, width: double.infinity),
+                      );
+                    } else if (controller.selectedVideo.value != null) {
+                      // ২. ভিডিও প্রিভিউ (ভিডিও প্লেয়ার ছাড়া আইকন দেখানো হচ্ছে)
+                      return _buildMediaPreview(
+                        child: Container(
+                          color: Colors.black,
+                          width: double.infinity,
+                          height: 250,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.play_circle_fill, color: Colors.white, size: 50),
+                                const SizedBox(height: 10),
+                                Text(
+                                  "Video Selected",
+                                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  controller.selectedVideo.value!.name, // ভিডিওর নাম
+                                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Positioned(
-                          top: 8, right: 8,
-                          child: GestureDetector(
-                            onTap: () => _removeMedia(0),
-                            child: const CircleAvatar(backgroundColor: Colors.black54, child: Icon(Icons.close, color: Colors.white)),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  }),
                 ],
               ),
             ),
           ),
+
+          // --- BOTTOM ACTION BAR ---
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey[200]!))),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                TextButton.icon(onPressed: _pickImages, icon: const Icon(Icons.photo_library, color: Colors.green), label: const Text("Photo")),
-                TextButton.icon(onPressed: _pickVideo, icon: const Icon(Icons.video_call, color: Colors.red), label: const Text("Video")),
+                // Photo Button calls Controller logic
+                TextButton.icon(
+                  onPressed: () => controller.pickImageFromGallery(),
+                  icon: const Icon(Icons.photo_library, color: Colors.green),
+                  label: const Text("Photo"),
+                ),
+                // Video Button calls Controller logic
+                TextButton.icon(
+                  onPressed: () => controller.pickVideoFromGallery(),
+                  icon: const Icon(Icons.video_call, color: Colors.red),
+                  label: const Text("Video"),
+                ),
               ],
             ),
           )
         ],
       ),
+    );
+  }
+
+  // প্রিভিউ দেখানোর জন্য কমন উইজেট (ইমেজ ও ভিডিও উভয়ের জন্য)
+  Widget _buildMediaPreview({required Widget child}) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            height: 250, // ফিক্সড হাইট প্রিভিউ এর জন্য
+            width: double.infinity,
+            child: child,
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: _removeMedia,
+            child: const CircleAvatar(
+              backgroundColor: Colors.black54,
+              radius: 14,
+              child: Icon(Icons.close, color: Colors.white, size: 18),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
