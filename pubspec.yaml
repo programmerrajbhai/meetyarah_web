@@ -21,7 +21,6 @@ dependencies:
   shared_preferences: ^2.2.2
   shimmer: ^3.0.0
 
-  # Downgraded packages to support older Flutter versions
   share_plus: ^7.2.0
   app_links: ^3.4.5
   webview_flutter: ^4.4.2
@@ -34,9 +33,6 @@ dependencies:
   flutter_stripe: ^10.1.0
   cached_network_image: ^3.4.1
 
-
-  firebase_analytics: ^10.8.0
-  firebase_core:
   timeago: ^3.6.1
 
 

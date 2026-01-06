@@ -9,7 +9,6 @@ class SimpleVideoPlayer extends StatefulWidget {
   State<SimpleVideoPlayer> createState() => _SimpleVideoPlayerState();
 }
 
-// ১. Mixin যুক্ত করা হলো যাতে স্ক্রল করলে ভিডিও বারবার রিলোড না হয়
 class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKeepAliveClientMixin {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
@@ -20,15 +19,12 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKee
   @override
   void initState() {
     super.initState();
-    // ভিডিও কনফিগারেশন
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
       ..initialize().then((_) {
-        // ৩. mounted চেক করা জরুরি (ল্যাগ ও ক্র্যাশ কমায়)
         if (mounted) {
           setState(() {
             _isInitialized = true;
-            // ডিফল্ট ভলিউম সেট করা
-            _controller.setLooping(true); // ভিডিও লুপে চলবে (ফেসবুকের মতো)
+            _controller.setLooping(true); // লুপ
           });
         }
       });
@@ -39,19 +35,27 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKee
     _controller.dispose();
     super.dispose();
   }
-
   void _togglePlay() {
-    if (!_isInitialized) return; // ইনিশিয়ালাইজ না হলে কাজ করবে না
+    if (!_isInitialized) return;
 
     setState(() {
       if (_controller.value.isPlaying) {
         _controller.pause();
         _isPlaying = false;
-        _showIcon = true;
+        _showIcon = true; // pause হলে play icon দেখাও
       } else {
         _controller.play();
         _isPlaying = true;
-        _showIcon = false;
+        _showIcon = false; // play হলে icon hide
+
+        // play হলে 1.5 সেকেন্ড পরে icon hide হবে
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted && _controller.value.isPlaying) {
+            setState(() {
+              _showIcon = false;
+            });
+          }
+        });
       }
     });
   }
@@ -63,27 +67,24 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKee
     });
   }
 
-  // ২. KeepAlive এর জন্য এটা true করতে হবে
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Mixin এর জন্য এটা কল করতে হবে
+    super.build(context);
 
     return Container(
-      color: Colors.black, // লোড হওয়ার আগে কালো ব্যাকগ্রাউন্ড (Better UX)
+      color: Colors.black,
       child: _isInitialized
           ? GestureDetector(
         onTap: _togglePlay,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // ১. ভিডিও লেয়ার (অপটিমাইজড)
             SizedBox.expand(
               child: FittedBox(
                 fit: BoxFit.cover,
-                // এখানে ম্যানুয়াল SizedBox দরকার নেই, VideoPlayer নিজেই সাইজ হ্যান্ডেল করে
                 child: SizedBox(
                   width: _controller.value.size.width,
                   height: _controller.value.size.height,
@@ -91,8 +92,6 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKee
                 ),
               ),
             ),
-
-            // ২. প্লে আইকন (ফেসবুক স্টাইল)
             if (_showIcon)
               Container(
                 decoration: BoxDecoration(
@@ -100,14 +99,12 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKee
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(12),
-                child: const Icon(
-                  Icons.play_arrow_rounded,
+                child: Icon(
+                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                   color: Colors.white,
                   size: 50,
                 ),
               ),
-
-            // ৩. সাউন্ড বাটন
             Positioned(
               bottom: 12,
               right: 12,
@@ -131,10 +128,9 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKee
         ),
       )
           : const Center(
-        // লোডিং এর সময় হালকা লোডার
         child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Colors.white54
+          strokeWidth: 2,
+          color: Colors.white54,
         ),
       ),
     );

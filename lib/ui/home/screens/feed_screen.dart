@@ -182,7 +182,6 @@ class _FeedScreenState extends State<FeedScreen> {
 
   // ✅ Regular Post Link Generator (Uses ?id=)
 
-
   String _getPostLink(String postId) {
     if (kIsWeb) {
       return "${Uri.base.origin}/?id=$postId";
