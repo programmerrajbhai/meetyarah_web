@@ -262,8 +262,7 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget _shareOptionItem(
-      IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _shareOptionItem(IconData icon, String label, Color color, VoidCallback onTap) {
     return _FeedbackButton(
       onTap: onTap,
       child: Column(
@@ -707,16 +706,12 @@ class _FeedScreenState extends State<FeedScreen> {
         });
   }
 
-  Widget _actionButton(
-      {required IconData icon,
-      required String label,
-      required VoidCallback onTap}) {
+  Widget _actionButton({required IconData icon, required String label, required VoidCallback onTap}) {
     return _FeedbackButton(
         onTap: onTap, child: _actionButtonContent(icon, label));
   }
 
-  Widget _actionButtonContent(IconData icon, String label,
-      {Color color = Colors.grey}) {
+  Widget _actionButtonContent(IconData icon, String label, {Color color = Colors.grey}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [

@@ -8,7 +8,6 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // কন্ট্রোলার লোড
     final SearchUserController controller = Get.put(SearchUserController());
 
     return Scaffold(
@@ -22,28 +21,20 @@ class SearchScreen extends StatelessWidget {
         ),
         title: TextField(
           controller: controller.searchInputController,
-          autofocus: true, // স্ক্রিন ওপেন হতেই কিবোর্ড আসবে
+          autofocus: true,
           style: const TextStyle(color: Colors.black, fontSize: 16),
           decoration: const InputDecoration(
             hintText: "Search users...",
             hintStyle: TextStyle(color: Colors.grey),
             border: InputBorder.none,
           ),
-          onChanged: (value) {
-            // কন্ট্রোলারের ভেরিয়েবলে ডাটা পাঠাচ্ছি (Debounce হ্যান্ডেল করবে)
-            controller.searchText.value = value;
-          },
+          onChanged: (value) => controller.searchText.value = value,
         ),
         actions: [
-          // ক্লিয়ার বাটন (যদি টেক্সট থাকে)
           Obx(() => controller.searchText.value.isNotEmpty
               ? IconButton(
             icon: const Icon(Icons.close, color: Colors.grey),
-            onPressed: () {
-              controller.searchInputController.clear();
-              controller.searchText.value = '';
-              controller.searchResults.clear();
-            },
+            onPressed: controller.clearSearch,
           )
               : const SizedBox()),
         ],
@@ -53,7 +44,9 @@ class SearchScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (controller.searchResults.isEmpty && controller.searchText.value.isNotEmpty) {
+        if (controller.searchResults.isEmpty &&
+            controller.searchText.value.trim().isNotEmpty &&
+            controller.searchText.value.trim().length >= 2) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -72,31 +65,30 @@ class SearchScreen extends StatelessWidget {
         if (controller.searchResults.isEmpty) {
           return Center(
             child: Text(
-              "Type name to search",
+              "Type at least 2 letters to search",
               style: TextStyle(color: Colors.grey[400]),
             ),
           );
         }
 
-        // সার্চ রেজাল্ট লিস্ট
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 10),
           itemCount: controller.searchResults.length,
           itemBuilder: (context, index) {
-            var user = controller.searchResults[index];
+            final user = controller.searchResults[index] as Map<String, dynamic>;
 
-            int userId = int.tryParse(user['user_id'].toString()) ?? 0;
-            String fullName = user['full_name'] ?? "Unknown";
-            String username = user['username'] ?? "";
-            String profilePic = user['profile_picture_url'] ?? "";
+            final int userId = int.tryParse(user['user_id'].toString()) ?? 0;
+            final String fullName = (user['full_name'] ?? "Unknown").toString();
+            final String username = (user['username'] ?? "").toString();
+            final String profilePic =
+            (user['profile_picture_url'] ?? "").toString();
 
             return ListTile(
               leading: CircleAvatar(
                 radius: 25,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: profilePic.isNotEmpty
-                    ? NetworkImage(profilePic)
-                    : null,
+                backgroundImage:
+                profilePic.isNotEmpty ? NetworkImage(profilePic) : null,
                 child: profilePic.isEmpty
                     ? const Icon(Icons.person, color: Colors.grey)
                     : null,
@@ -106,9 +98,9 @@ class SearchScreen extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text("@$username"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+              trailing: const Icon(Icons.arrow_forward_ios,
+                  size: 14, color: Colors.grey),
               onTap: () {
-                // ইউজারের প্রোফাইল ভিউতে যাওয়া
                 Get.to(() => ViewProfileScreen(userId: userId));
               },
             );

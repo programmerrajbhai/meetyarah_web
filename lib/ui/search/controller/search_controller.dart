@@ -4,47 +4,65 @@ import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
 
 class SearchUserController extends GetxController {
-  var searchResults = [].obs; // রেজাল্ট লিস্ট
-  var isLoading = false.obs;  // লোডিং স্ট্যাটাস
-  var searchText = ''.obs;    // যা টাইপ করা হচ্ছে
+  var searchResults = <dynamic>[].obs;
+  var isLoading = false.obs;
+  var searchText = ''.obs;
 
-  TextEditingController searchInputController = TextEditingController();
+  final TextEditingController searchInputController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    // 🔥 Magic Part: ইউজার থামা পর্যন্ত অপেক্ষা করবে (500ms), তারপর সার্চ করবে
-    debounce(searchText, (query) {
-      _performSearch(query.toString());
-    }, time: const Duration(milliseconds: 500));
+
+    debounce(
+      searchText,
+          (query) => _performSearch(query.toString()),
+      time: const Duration(milliseconds: 500),
+    );
   }
 
-  // মেইন সার্চ ফাংশন
-  void _performSearch(String query) async {
-    if (query.isEmpty) {
+  Future<void> _performSearch(String query) async {
+    final q = query.trim();
+
+    // ✅ minimum 2 char (backend এও আছে)
+    if (q.isEmpty || q.length < 2) {
       searchResults.clear();
       return;
     }
 
     try {
       isLoading(true);
-      print("🔎 Searching for: $query");
 
-      String url = "${Urls.searchUsersApi}?query=$query";
-      networkResponse response = await networkClient.getRequest(url: url);
+      // ✅ Backend param name: q + limit
+      final String url =
+          "${Urls.searchUsersApi}?q=${Uri.encodeComponent(q)}&limit=20";
 
-      if (response.isSuccess) {
-        if (response.data['status'] == 'success') {
-          searchResults.value = response.data['users'] ?? [];
+      final networkResponse response =
+      await networkClient.getRequest(url: url);
+
+      if (response.isSuccess == true) {
+        final data = response.data;
+
+        if (data != null && data['status'] == 'success') {
+          searchResults.value = (data['users'] ?? []) as List<dynamic>;
         } else {
           searchResults.clear();
         }
+      } else {
+        searchResults.clear();
       }
     } catch (e) {
-      print("❌ Search Error: $e");
+      searchResults.clear();
+      debugPrint("❌ Search Error: $e");
     } finally {
       isLoading(false);
     }
+  }
+
+  void clearSearch() {
+    searchInputController.clear();
+    searchText.value = '';
+    searchResults.clear();
   }
 
   @override

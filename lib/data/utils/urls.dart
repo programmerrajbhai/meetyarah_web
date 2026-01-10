@@ -15,7 +15,7 @@ class Urls {
   static String get likePostApi => "$_rootUrl/like_post.php";
 
   // --- 🔥 নতুন API গুলো (New Added) ---
-  static String get searchUsersApi => "$_rootUrl/search_users.php";
+  static String get searchUsersApi => "$_rootUrl/global_search.php";
   static String get followUserApi => "$_rootUrl/follow_user.php";
   static String get unfollowUserApi => "$_rootUrl/unfollow_user.php";
   static String get getNotificationsApi => "$_rootUrl/get_notifications.php";
@@ -23,7 +23,6 @@ class Urls {
   static String get uploadStoryApi => "$_rootUrl/upload_story.php";
   static String get getActiveStoriesApi => "$_rootUrl/get_active_stories.php";
   static String get getSinglePostApi => "$_rootUrl/get_single_post.php";
-
   static String get getStoriesApi => "$_rootUrl/get_active_stories.php";
 
 
