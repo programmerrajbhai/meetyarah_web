@@ -25,9 +25,9 @@ class StoryController extends GetxController {
       // প্রথমবার লোড করার সময় লোডার দেখাবে
       if (storyList.isEmpty) isLoading(true);
 
-      print("Fetching stories from: ${Urls.getStoriesApi}"); // ডিবাগিং
+      print("Fetching stories from: ${Urls.getActiveStoriesApi}"); // ডিবাগিং
 
-      var response = await networkClient.getRequest(url: Urls.getStoriesApi);
+      var response = await networkClient.getRequest(url: Urls.getActiveStoriesApi);
 
       // রেসপন্স প্রিন্ট করে দেখুন কনসোলে
       print("Story Response: ${response.data}");

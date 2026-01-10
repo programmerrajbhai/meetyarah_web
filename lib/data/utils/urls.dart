@@ -19,11 +19,21 @@ class Urls {
   static String get followUserApi => "$_rootUrl/follow_user.php";
   static String get unfollowUserApi => "$_rootUrl/unfollow_user.php";
   static String get getNotificationsApi => "$_rootUrl/get_notifications.php";
+
+
   static String get updateProfileApi => "$_rootUrl/update_profile.php";
+
+
   static String get uploadStoryApi => "$_rootUrl/upload_story.php";
   static String get getActiveStoriesApi => "$_rootUrl/get_active_stories.php";
   static String get getSinglePostApi => "$_rootUrl/get_single_post.php";
-  static String get getStoriesApi => "$_rootUrl/get_active_stories.php";
+
+
+
+  static String get blockUserApi => "$_rootUrl/block_user.php";
+  static String get unblockUserApi => "$_rootUrl/unblock_user.php";
+  static String get getBlockedUsersApi => "$_rootUrl/get_blocked_users.php";
+
 
 
 }
