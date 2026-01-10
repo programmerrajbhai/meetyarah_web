@@ -3,15 +3,14 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
-import 'package:meetyarah/ui/login_reg_screens/controllers/auth_service.dart';
+
+import '../story/story_image_preview_screen.dart';
+import '../story/story_text_preview_screen.dart';
 
 class StoryController extends GetxController {
-  // স্টোরি লিস্ট
   var storyList = [].obs;
   var isLoading = true.obs;
   var isUploading = false.obs;
-
-  final AuthService _authService = Get.find<AuthService>();
 
   @override
   void onInit() {
@@ -19,74 +18,112 @@ class StoryController extends GetxController {
     fetchStories();
   }
 
-  // ১. স্টোরি লোড করা
-  void fetchStories() async {
+  void safeSnack(String msg) {
     try {
-      // প্রথমবার লোড করার সময় লোডার দেখাবে
+      final ctx = Get.context;
+      if (ctx != null) {
+        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg)));
+      } else {
+        debugPrint(msg);
+      }
+    } catch (_) {
+      debugPrint(msg);
+    }
+  }
+
+  Future<void> fetchStories() async {
+    try {
       if (storyList.isEmpty) isLoading(true);
 
-      print("Fetching stories from: ${Urls.getActiveStoriesApi}"); // ডিবাগিং
+      final response = await networkClient.getRequest(url: Urls.getActiveStoriesApi);
 
-      var response = await networkClient.getRequest(url: Urls.getActiveStoriesApi);
-
-      // রেসপন্স প্রিন্ট করে দেখুন কনসোলে
-      print("Story Response: ${response.data}");
-
-      if (response.isSuccess) {
-        if (response.data['status'] == 'success') {
-          var rawList = response.data['stories'];
-          if (rawList != null) {
-            storyList.assignAll(rawList); // ✅ লিস্ট ফোর্স আপডেট
-          }
+      if (response.isSuccess && response.data != null && response.data['status'] == 'success') {
+        final rawList = response.data['stories'];
+        if (rawList != null) {
+          storyList.assignAll(rawList);
+        } else {
+          storyList.clear();
         }
       }
     } catch (e) {
-      print("Story Fetch Error: $e");
+      debugPrint("Story Fetch Error: $e");
     } finally {
       isLoading(false);
     }
   }
 
-  // ২. স্টোরি আপলোড করা
-  void uploadStory() async {
-    final ImagePicker picker = ImagePicker();
+  Future<void> pickStoryType() async {
+    Get.bottomSheet(
+      SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: Wrap(
+            runSpacing: 10,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text("Photo Story"),
+                onTap: () {
+                  Get.back();
+                  pickImageAndPreview();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.text_fields),
+                title: const Text("Text Story"),
+                onTap: () {
+                  Get.back();
+                  Get.to(() => const StoryTextPreviewScreen());
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Future<void> pickImageAndPreview() async {
+    final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
 
-    if (image != null) {
-      try {
-        isUploading(true);
+    Get.to(() => StoryImagePreviewScreen(image: image));
+  }
 
-        Get.snackbar(
-            "Uploading",
-            "Adding to your story...",
-            showProgressIndicator: true,
-            backgroundColor: Colors.blueAccent,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM
-        );
+  Future<void> uploadImageStory(XFile imageFile) async {
+    try {
+      isUploading(true);
+      safeSnack("Uploading story...");
 
-        Map<String, String> fields = {
-          "user_id": _authService.userId ?? "",
-        };
+      final res = await networkClient.multipartRequest(
+        url: Urls.uploadStoryApi,
+        fields: {},          // token middleware থেকে user নেয়
+        imageFile: imageFile,
+        imageKey: 'media',   // MUST match PHP
+      );
 
-        var response = await networkClient.multipartRequest(
-          url: Urls.uploadStoryApi,
-          fields: fields,
-          imagePath: image.path,
-          imageKey: 'image',
-        );
+      debugPrint("UPLOAD status: ${res.statusCode}");
+      debugPrint("UPLOAD data: ${res.data}");
+      debugPrint("UPLOAD err: ${res.errorMessage}");
 
-        if (response.isSuccess) {
-          Get.snackbar("Success", "Story added!", backgroundColor: Colors.green, colorText: Colors.white);
-          fetchStories(); // ✅ আপলোড শেষে রিফ্রেশ
-        } else {
-          Get.snackbar("Failed", "Could not upload story", backgroundColor: Colors.red, colorText: Colors.white);
-        }
-      } catch (e) {
-        print("Upload Error: $e");
-      } finally {
-        isUploading(false);
+      if (res.isSuccess && res.data != null && res.data['status'] == 'success') {
+        safeSnack("Story uploaded!");
+        await fetchStories();
+        Get.back(); // preview screen close
+      } else {
+        safeSnack(res.errorMessage ?? "Upload failed");
       }
+    } catch (e) {
+      debugPrint("Upload Error: $e");
+      safeSnack("Upload Error: $e");
+    } finally {
+      isUploading(false);
     }
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart' hide Response;
+import 'package:image_picker/image_picker.dart';
 import '../../ui/login_reg_screens/controllers/auth_service.dart';
 
 class networkResponse {
@@ -19,175 +19,136 @@ class networkResponse {
 }
 
 class networkClient {
-  // --- ১. হেডার তৈরি (Token + Content Type) ---
+  // ---------------- HEADERS ----------------
   static Map<String, String> _getHeaders() {
-    final Map<String, String> headers = {
+    final headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
     };
 
-    // ✅ Token যুক্ত করা (Safe Check)
     try {
       if (Get.isRegistered<AuthService>()) {
-        final AuthService authService = Get.find<AuthService>();
-        // নাল চেক সহ টোকেন নেওয়া
-        final String token = authService.token.value.toString().trim();
+        final token = Get.find<AuthService>().token.value.toString().trim();
         if (token.isNotEmpty && token != "null") {
           headers['Authorization'] = 'Bearer $token';
         }
       }
-    } catch (e) {
-      print("Token Error: $e");
-    }
+    } catch (_) {}
 
     return headers;
   }
 
-  // --- ২. GET Request ---
+  // ---------------- GET ----------------
   static Future<networkResponse> getRequest({
     required String url,
     Map<String, String>? headers,
   }) async {
     try {
-      print("GET Request URL: $url");
-      Uri uri = Uri.parse(url);
-
-      // ✅ Merge headers
-      final mergedHeaders = {..._getHeaders(), ...(headers ?? {})};
-
-      final http.Response response = await http.get(uri, headers: mergedHeaders);
-
-      print("Status Code: ${response.statusCode}");
-      // print("Response: ${response.body}"); // দরকার হলে ডিবাগিং এর জন্য আনকমেন্ট করুন
-
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {..._getHeaders(), ...(headers ?? {})},
+      );
       return _handleResponse(response);
     } catch (e) {
-      print("Network Error: $e");
       return networkResponse(
         isSuccess: false,
-        errorMessage: "Connection Error: $e",
+        errorMessage: e.toString(),
         statusCode: -1,
       );
     }
   }
 
-  // --- ৩. POST Request (JSON Body) ---
+  // ---------------- POST ----------------
   static Future<networkResponse> postRequest({
     required String url,
-    required Map<String, dynamic>? body,
+    Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
     try {
-      print("POST Request URL: $url");
-      Uri uri = Uri.parse(url);
-
-      // ✅ Merge headers
-      final mergedHeaders = {..._getHeaders(), ...(headers ?? {})};
-
-      final http.Response response = await http.post(
-        uri,
-        headers: mergedHeaders,
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {..._getHeaders(), ...(headers ?? {})},
         body: jsonEncode(body),
       );
-
-      print("Status Code: ${response.statusCode}");
-
       return _handleResponse(response);
     } catch (e) {
-      print("Network Error: $e");
       return networkResponse(
         isSuccess: false,
-        errorMessage: "Connection Error: $e",
+        errorMessage: e.toString(),
         statusCode: -1,
       );
     }
   }
 
-  // --- ৪. Multipart Request (ছবি আপলোডের জন্য - 🔥 FIXED) ---
+  // ---------------- MULTIPART (FIXED) ----------------
   static Future<networkResponse> multipartRequest({
     required String url,
     required Map<String, String> fields,
-    required String? imagePath,
+
+    /// ✅ NEW (Web + Mobile)
+    XFile? imageFile,
+
+    /// ✅ OLD SUPPORT (won’t break old code)
+    String? imagePath,
+
     required String imageKey,
   }) async {
     try {
-      print("Multipart Request URL: $url");
-      Uri uri = Uri.parse(url);
-      var request = http.MultipartRequest('POST', uri);
+      final request = http.MultipartRequest('POST', Uri.parse(url));
 
-      // 🔥 [CRITICAL FIX]
-      // সাধারণ রিকোয়েস্টে Content-Type: application/json থাকে।
-      // কিন্তু ছবি আপলোডের সময় এটা থাকলে সার্ভার ফাইল রিড করতে পারে না।
-      // তাই আমরা 헤ডার কপি করে Content-Type রিমুভ করে দিচ্ছি।
-      Map<String, String> headers = Map.from(_getHeaders());
-      headers.remove("Content-Type");
-
+      final headers = Map<String, String>.from(_getHeaders());
+      headers.remove("Content-Type"); // multipart fix
       request.headers.addAll(headers);
       request.fields.addAll(fields);
 
-      if (imagePath != null && imagePath.isNotEmpty) {
-        // ফাইলটি আছে কি না চেক করে নেওয়া ভালো
-        File file = File(imagePath);
-        if (await file.exists()) {
-          var multipartFile = await http.MultipartFile.fromPath(imageKey, imagePath);
-          request.files.add(multipartFile);
-        } else {
-          print("File does not exist at path: $imagePath");
-        }
+      // ✅ Convert old imagePath → XFile
+      if (imageFile == null && imagePath != null && imagePath.isNotEmpty) {
+        imageFile = XFile(imagePath);
       }
 
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            imageKey,
+            bytes,
+            filename: imageFile.name,
+          ),
+        );
+      }
 
-      print("Status Code: ${response.statusCode}");
-
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
       return _handleResponse(response);
     } catch (e) {
-      print("Network Error: $e");
       return networkResponse(
         isSuccess: false,
-        errorMessage: "Upload Error: $e",
+        errorMessage: e.toString(),
         statusCode: -1,
       );
     }
   }
 
-  // --- ৫. কমন রেসপন্স হ্যান্ডলার (Code Reuse) ---
+  // ---------------- RESPONSE HANDLER ----------------
   static networkResponse _handleResponse(http.Response response) {
     try {
-      // ✅ 200 এবং 201 দুটোই সাকসেস হিসেবে ধরা হয়
+      final data = jsonDecode(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decodedJson = jsonDecode(response.body);
         return networkResponse(
           isSuccess: true,
-          data: decodedJson,
-          statusCode: response.statusCode,
-        );
-      } else {
-        // এরর হ্যান্ডলিং
-        String msg = "Request failed (Code: ${response.statusCode})";
-        try {
-          final decoded = jsonDecode(response.body);
-          if (decoded['message'] != null) {
-            msg = decoded['message'];
-          } else if (decoded['error'] != null) {
-            msg = decoded['error'];
-          }
-        } catch (_) {
-          // JSON না হলে ডিফল্ট মেসেজ থাকবে
-        }
-
-        return networkResponse(
-          isSuccess: false,
-          errorMessage: msg,
+          data: data,
           statusCode: response.statusCode,
         );
       }
-    } catch (e) {
-      // যদি সার্ভার 200 দেয় কিন্তু Valid JSON না দেয় (যেমন HTML Error Page)
       return networkResponse(
         isSuccess: false,
-        errorMessage: "Invalid Response Format: $e",
+        errorMessage: data['message'] ?? "Request failed",
+        statusCode: response.statusCode,
+      );
+    } catch (_) {
+      return networkResponse(
+        isSuccess: false,
+        errorMessage: "Invalid server response",
         statusCode: response.statusCode,
       );
     }

@@ -28,6 +28,7 @@ class Urls {
   static String get getActiveStoriesApi => "$_rootUrl/get_active_stories.php";
   static String get getSinglePostApi => "$_rootUrl/get_single_post.php";
 
+  static String get uploadStoryTextApi => "$_rootUrl/upload_story_text.php";
 
 
   static String get blockUserApi => "$_rootUrl/block_user.php";
