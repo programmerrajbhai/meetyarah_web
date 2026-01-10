@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../reels/screens/reel_screens.dart';
+import '../../view_profile/screens/view_profile_screens.dart';
 import '../controllers/get_post_controllers.dart';
 import '../controllers/like_controller.dart';
 import '../../view_post/screens/post_details.dart';
@@ -577,25 +578,51 @@ class _FeedScreenState extends State<FeedScreen> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                CircleAvatar(
-                    backgroundImage: NetworkImage(post.profile_picture_url ??
-                        "https://via.placeholder.com/150")),
-                const SizedBox(width: 10),
+                // 🔥 [UPDATED] প্রোফাইল এরিয়া এখন ক্লিকেবল
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_getUserName(post),
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(_formatTimeAgo(post.created_at),
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 12)),
-                    ],
+                  child: InkWell(
+                    onTap: () {
+                      // ✅ প্রোফাইলে নেভিগেট করার লজিক
+                      int userId = int.tryParse(post.user_id.toString()) ?? 0;
+                      if (userId != 0) {
+                        Get.to(() => ViewProfileScreen(userId: userId));
+                      } else {
+                        print("Error: User ID not found in post data");
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage: NetworkImage(
+                              post.profile_picture_url ?? "https://via.placeholder.com/150"
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getUserName(post),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                _formatTimeAgo(post.created_at),
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+
+                // অপশন বাটন (এটি ক্লিকের বাইরে থাকবে)
                 IconButton(
-                    icon: const Icon(Icons.more_horiz),
-                    onPressed: () => _showPostOptions(context, post)),
+                  icon: const Icon(Icons.more_horiz),
+                  onPressed: () => _showPostOptions(context, post),
+                ),
               ],
             ),
           ),
@@ -625,25 +652,25 @@ class _FeedScreenState extends State<FeedScreen> {
                     decoration: const BoxDecoration(color: Colors.black),
                     child: isVideo(post.image_url!)
                         ? ClipRRect(
-                            child: SimpleVideoPlayer(videoUrl: post.image_url!),
-                          )
+                      child: SimpleVideoPlayer(videoUrl: post.image_url!),
+                    )
                         : Hero(
-                            tag: "post_image_${post.post_id}_$index",
-                            child: CachedNetworkImage(
-                              imageUrl: post.image_url!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: Colors.grey[200],
-                                child: const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2)),
-                              ),
-                              errorWidget: (context, url, error) => const Icon(
-                                  Icons.broken_image,
-                                  color: Colors.grey,
-                                  size: 50),
-                            ),
-                          ),
+                      tag: "post_image_${post.post_id}_$index",
+                      child: CachedNetworkImage(
+                        imageUrl: post.image_url!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2)),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                            size: 50),
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -661,14 +688,14 @@ class _FeedScreenState extends State<FeedScreen> {
                     const SizedBox(width: 6),
                     Text("${post.like_count}",
                         style:
-                            const TextStyle(color: Colors.grey, fontSize: 13))
+                        const TextStyle(color: Colors.grey, fontSize: 13))
                   ]
                 ]),
                 InkWell(
                     onTap: () => _handlePostClick(post),
                     child: Text("${post.comment_count ?? 0} Comments",
                         style:
-                            const TextStyle(color: Colors.grey, fontSize: 13))),
+                        const TextStyle(color: Colors.grey, fontSize: 13))),
               ],
             ),
           ),
@@ -697,7 +724,6 @@ class _FeedScreenState extends State<FeedScreen> {
       ),
     );
   }
-
   Widget _buildReactionButton(dynamic post, int index) {
     return LikeButton(
         isLiked: post.isLiked,
