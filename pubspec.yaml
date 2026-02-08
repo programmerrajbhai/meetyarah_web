@@ -13,7 +13,7 @@ dependencies:
 
   cupertino_icons: ^1.0.2
   get: ^4.6.6
-  google_fonts: ^6.1.0
+  google_fonts: ^7.0.2
   font_awesome_flutter: ^10.6.0
   image_picker: ^1.0.4
   video_player: ^2.8.1
@@ -21,16 +21,16 @@ dependencies:
   shared_preferences: ^2.2.2
   shimmer: ^3.0.0
 
-  share_plus: ^7.2.0
-  app_links: ^3.4.5
+  share_plus: ^12.0.1
+  app_links: ^7.0.0
   webview_flutter: ^4.4.2
-  webview_flutter_android: ^3.13.0
+  webview_flutter_android: ^4.10.11
   url_launcher: ^6.3.2
-  webview_flutter_web: 0.2.2+4
-  android_intent_plus: ^4.0.0
+  webview_flutter_web: ^0.2.3+4
+  android_intent_plus: ^6.0.0
   video_thumbnail: ^0.5.3
   faker: ^2.1.0
-  flutter_stripe: ^10.1.0
+
   cached_network_image: ^3.4.1
 
   timeago: ^3.6.1
@@ -41,7 +41,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0 # Downgraded lints as well
+  flutter_lints: ^6.0.0 # Downgraded lints as well
 
 # No override needed if using these older versions
 

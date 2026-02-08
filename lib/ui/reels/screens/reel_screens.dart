@@ -915,12 +915,20 @@ class _FacebookVideoCardState extends State<FacebookVideoCard>
 }
 
 // ✅ FEEDBACK BUTTON
+
+// ✅ সংশোধিত _FeedbackButton ক্লাস
 class _FeedbackButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
+  final VoidCallback? onLongPress; // এটি আগে থেকেই ছিল
 
-  const _FeedbackButton({required this.child, this.onTap, this.onLongPress});
+  // এখানে পরিবর্তন করা হয়েছে: কনস্ট্রাক্টরে this.onLongPress যোগ করা হয়েছে
+  const _FeedbackButton({
+    super.key, 
+    required this.child, 
+    this.onTap, 
+    this.onLongPress, // এই লাইনটি নিশ্চিত করুন
+  });
 
   @override
   State<_FeedbackButton> createState() => _FeedbackButtonState();
@@ -938,7 +946,7 @@ class _FeedbackButtonState extends State<_FeedbackButton> {
         if (widget.onTap != null) widget.onTap!();
       },
       onTapCancel: () => setState(() => _isPressed = false),
-      onLongPress: widget.onLongPress,
+      onLongPress: widget.onLongPress, // এটি লঙ প্রেস হ্যান্ডেল করবে
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         transform: _isPressed

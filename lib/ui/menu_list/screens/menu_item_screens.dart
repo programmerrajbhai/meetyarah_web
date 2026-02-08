@@ -1,7 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:meetyarah/ui/education/screens/education_screen.dart';
 import 'package:meetyarah/ui/profile/screens/profile_screens.dart';
+
 import '../../login_reg_screens/controllers/auth_service.dart';
 import '../../profile/controllers/profile_controllers.dart';
 
@@ -9,151 +12,254 @@ class MenuScreen extends StatelessWidget {
   MenuScreen({Key? key}) : super(key: key);
 
   final AuthService authService = Get.find<AuthService>();
-  // কন্ট্রোলার ইনিশিলাইজ (যদি আগে না হয়ে থাকে)
   final ProfileController controller = Get.put(ProfileController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5), // Facebook Style Background
-      appBar: AppBar(
-        title: Text(
-            'Menu',
-            style: GoogleFonts.inter(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22)
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
-            child: IconButton(
-              icon: const Icon(Icons.search, color: Colors.black),
-              onPressed: () {},
+      backgroundColor: const Color(0xFFF8F9FD), // Ultra Light Blue-Grey Background
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- 1. Top Bar & Title ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Menu",
+                      style: GoogleFonts.poppins(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1A1D1E),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.search, color: Colors.black87),
+                        onPressed: () {},
+                      ),
+                    )
+                  ],
+                ),
+                
+                const SizedBox(height: 25),
+
+                // --- 2. Modern Profile Card ---
+                _buildModernProfileCard(),
+
+                const SizedBox(height: 30),
+
+                // --- 3. Education & Career (Hero Section) ---
+                Text("Learning Hub 🚀", style: _sectionTitleStyle()),
+                const SizedBox(height: 15),
+                _buildEducationHeroCard(), // ✅ ফিক্সড উইজেট
+
+                const SizedBox(height: 30),
+
+                // --- 4. Quick Actions (Social & Fun) ---
+                Text("Explore", style: _sectionTitleStyle()),
+                const SizedBox(height: 15),
+                _buildModernGrid(),
+
+                const SizedBox(height: 30),
+
+                // --- 5. Settings & More ---
+                Text("Preferences", style: _sectionTitleStyle()),
+                const SizedBox(height: 15),
+                _buildModernSettingsTile(Icons.settings_outlined, "Settings & Privacy", Colors.blue),
+                _buildModernSettingsTile(Icons.help_outline_rounded, "Help & Support", Colors.purple),
+                _buildModernSettingsTile(Icons.shield_outlined, "Safety & Terms", Colors.orange),
+
+                const SizedBox(height: 30),
+
+                // --- 6. Logout Button ---
+                _buildLogoutButton(),
+
+                const SizedBox(height: 40),
+              ],
             ),
           ),
-        ],
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          // Web Responsive Logic
-          bool isWideScreen = constraints.maxWidth > 700;
-          double contentWidth = isWideScreen ? 600 : constraints.maxWidth;
-
-          return Center(
-            child: SizedBox(
-              width: contentWidth,
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                children: [
-                  // --- ১. প্রোফাইল হেডার ---
-                  _buildProfileHeader(),
-
-                  const SizedBox(height: 20),
-                  const Text("All Shortcuts", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
-                  const SizedBox(height: 10),
-
-                  // --- ২. শর্টকাট গ্রিড ---
-                  _buildShortcutGrid(),
-
-                  const SizedBox(height: 20),
-                  const Divider(),
-
-                  // --- ৩. এক্সপান্ডেবল মেনু ---
-                  _buildExpandableMenu(
-                      icon: Icons.settings,
-                      title: "Settings & Privacy",
-                      children: ["Settings", "Privacy Checkup", "Device requests", "Ad preferences"]
-                  ),
-                  _buildExpandableMenu(
-                      icon: Icons.help_outline,
-                      title: "Help & Support",
-                      children: ["Help Center", "Support Inbox", "Report a problem"]
-                  ),
-                  _buildExpandableMenu(
-                      icon: Icons.info_outline,
-                      title: "Community Resources",
-                      children: ["Community Standards", "Safety Check"]
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // --- ৪. লগআউট বাটন ---
-                  _buildLogoutButton(),
-
-                  const SizedBox(height: 30),
-
-                  // Version
-                  Center(
-                    child: Text(
-                      "Meetyarah • Version 1.0.0",
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          );
-        },
+        ),
       ),
     );
   }
 
+  // --- STYLES ---
+  TextStyle _sectionTitleStyle() => GoogleFonts.poppins(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Colors.grey[800],
+  );
+
   // --- WIDGETS ---
 
-  Widget _buildProfileHeader() {
+  // 1. Modern Profile Card with Glass Effect
+  Widget _buildModernProfileCard() {
     return Obx(() {
       final user = controller.profileUser.value;
-      return Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => Get.to(() => const ProfilePage()),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundImage: NetworkImage(
+      return GestureDetector(
+        onTap: () => Get.to(() => const ProfilePage()),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF6C63FF).withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF6C63FF), width: 2),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: CircleAvatar(
+                    radius: 32,
+                    backgroundImage: NetworkImage(
                       user?.profilePictureUrl ?? "https://i.pravatar.cc/150?img=12"
+                    ),
                   ),
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          user?.fullName ?? "Loading...",
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.fullName ?? "Loading...",
+                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E7FF),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const Text("See your profile", style: TextStyle(color: Colors.grey, fontSize: 14)),
-                    ],
-                  ),
+                      child: Text(
+                        "View Profile",
+                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF4F46E5), fontWeight: FontWeight.w600),
+                      ),
+                    )
+                  ],
                 ),
-                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-              ],
-            ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 18),
+            ],
           ),
         ),
       );
     });
   }
 
-  Widget _buildShortcutGrid() {
-    final List<Map<String, dynamic>> shortcuts = [
-      {'icon': Icons.group, 'label': 'Groups', 'color': Colors.blue},
-      {'icon': Icons.storefront, 'label': 'Marketplace', 'color': Colors.green},
-      {'icon': Icons.ondemand_video, 'label': 'Video', 'color': Colors.red},
-      {'icon': Icons.history, 'label': 'Memories', 'color': Colors.purple},
-      {'icon': Icons.bookmark, 'label': 'Saved', 'color': Colors.deepPurple},
-      {'icon': Icons.flag, 'label': 'Pages', 'color': Colors.orange},
-      {'icon': Icons.event, 'label': 'Events', 'color': Colors.redAccent},
-      {'icon': Icons.gamepad, 'label': 'Gaming', 'color': Colors.indigo},
+  // ✅ 2. Education Hero Card (FIXED OVERFLOW)
+  Widget _buildEducationHeroCard() {
+    return GestureDetector(
+      onTap: () => Get.to(() => const EducationScreen()),
+      child: Container(
+        width: double.infinity,
+        // height: 140, // ❌ REMOVED: ফিক্সড হাইট সরিয়ে দিয়েছি যাতে ওভারফ্লো না হয়
+        constraints: const BoxConstraints(minHeight: 150), // ✅ ADDED: মিনিমাম হাইট সেট করেছি
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], // Deep Purple to Blue
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2575FC).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background Pattern
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(Icons.school, size: 150, color: Colors.white.withOpacity(0.1)),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min, // ✅ ADDED: কন্টেন্ট অনুযায়ী সাইজ নেবে
+                children: [
+                  Text(
+                    "Education Hub",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "SSC • HSC • Job Prep • Skills",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 15), // একটু স্পেস বাড়ানো হয়েছে
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "Start Learning →",
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 3. Modern Grid for Social/Games
+  Widget _buildModernGrid() {
+    final List<Map<String, dynamic>> items = [
+      {'icon': Icons.group_rounded, 'label': 'Community', 'color': Colors.blueAccent},
+      {'icon': Icons.play_circle_fill_rounded, 'label': 'Videos', 'color': Colors.redAccent},
+      {'icon': Icons.gamepad_rounded, 'label': 'Games', 'color': Colors.deepPurpleAccent},
+      {'icon': Icons.storefront_rounded, 'label': 'Market', 'color': Colors.teal},
+      {'icon': Icons.bookmark_rounded, 'label': 'Saved', 'color': Colors.amber},
+      {'icon': Icons.event_note_rounded, 'label': 'Events', 'color': Colors.pinkAccent},
     ];
 
     return GridView.builder(
@@ -161,33 +267,51 @@ class MenuScreen extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 3, // চ্যাপ্টা কার্ডের জন্য
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        childAspectRatio: 2.5,
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 15,
       ),
-      itemCount: shortcuts.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        final item = shortcuts[index];
+        final item = items[index];
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 5)],
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () {}, // Future Logic
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Icon(item['icon'], color: item['color'], size: 28),
-                    const SizedBox(width: 12),
-                    Text(item['label'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                  ],
-                ),
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: item['color'].withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(item['icon'], color: item['color'], size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    item['label'],
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Colors.black87
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -196,54 +320,65 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandableMenu({required IconData icon, required String title, required List<String> children}) {
-    return Theme(
-      data: ThemeData().copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        leading: Icon(icon, size: 30, color: Colors.grey[700]),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        childrenPadding: const EdgeInsets.only(left: 16, bottom: 10),
-        children: children.map((subItem) => ListTile(
-          contentPadding: const EdgeInsets.only(left: 40),
-          title: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Text(subItem, style: const TextStyle(fontWeight: FontWeight.w500)),
+  // 4. Modern Settings Tile
+  Widget _buildModernSettingsTile(IconData icon, String title, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
-          onTap: () {},
-        )).toList(),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 15),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+        onTap: () {},
       ),
     );
   }
 
+  // 5. Gen Z Style Logout Button
   Widget _buildLogoutButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    return SizedBox(
+      width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey[200],
-          foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          backgroundColor: const Color(0xFFFFECEC),
+          foregroundColor: Colors.red,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         onPressed: () {
           Get.defaultDialog(
-            title: "Log Out?",
+            title: "Hold on!",
+            titleStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
             middleText: "Are you sure you want to log out?",
-            textConfirm: "Yes",
-            textCancel: "No",
+            textConfirm: "Yes, Logout",
+            textCancel: "Cancel",
             confirmTextColor: Colors.white,
+            buttonColor: Colors.red,
+            radius: 16,
             onConfirm: () {
               authService.logout();
             },
           );
         },
-        child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        child: Text(
+          "Log Out",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
       ),
     );
   }

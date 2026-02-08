@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+
 import 'package:get/get.dart';
 import 'package:app_links/app_links.dart';
 
@@ -15,20 +15,12 @@ import 'package:meetyarah/ui/login_reg_screens/controllers/auth_service.dart';
 import 'package:meetyarah/ui/view_post/screens/post_details.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Firebase ইনিশিয়ালাইজেশন পার্ট রিমুভ করা হয়েছে
+  WidgetsFlutterBinding.ensureInitialized();
 
   registerWebView();
   await Get.putAsync(() => AuthService().init());
 
-  try {
-    Stripe.publishableKey = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-    await Stripe.instance.applySettings();
-  } catch (e)
-  {
-    print("⚠️ Stripe Initialization Error: $e");
-  }
   runApp(const MyApp());
 }
 
@@ -41,7 +33,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late AppLinks _appLinks;
 
-  // ✅ Analytics এবং Observer রিমুভ করা হয়েছে
+
 
   @override
   void initState() {
@@ -77,7 +69,7 @@ class _MyAppState extends State<MyApp> {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Meetyarah',
-      // ✅ navigatorObservers থেকে Firebase রিমুভ করা হয়েছে
+
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         dragDevices: {
           PointerDeviceKind.mouse,
