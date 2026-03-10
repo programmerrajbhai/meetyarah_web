@@ -11,6 +11,7 @@ class MeetyarahLogo extends StatefulWidget {
     this.animate = true,
   }) : super(key: key);
 
+
   @override
   State<MeetyarahLogo> createState() => _MeetyarahLogoState();
 }
