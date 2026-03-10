@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:meetyarah/ui/create_post/screens/create_post.dart';
@@ -10,7 +11,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // কন্ট্রোলার লোড
     final ProfileController controller = Get.put(ProfileController());
 
     return Scaffold(
@@ -84,6 +84,18 @@ class ProfilePage extends StatelessWidget {
     final user = controller.profileUser.value;
     final postCount = controller.myPosts.length.toString();
 
+    // ✅ ফিক্সড: মডেল থেকে লেটেস্ট ফলোয়ার কাউন্ট নেওয়া হলো
+    final followersCount = user?.followersCount.toString() ?? "0";
+    final followingCount = user?.followingCount.toString() ?? "0";
+
+    String profilePicUrl = (user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty)
+        ? user.profilePictureUrl!
+        : "https://ui-avatars.com/api/?name=${Uri.encodeComponent(user?.fullName ?? "User")}&background=random";
+
+    String bioText = (user?.bio != null && user!.bio!.trim().isNotEmpty)
+        ? user.bio!
+        : "No bio available";
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -91,34 +103,33 @@ class ProfilePage extends StatelessWidget {
         children: [
           Row(
             children: [
-              // প্রোফাইল ছবি
-              Container(
-                width: 86,
-                height: 86,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: NetworkImage(
-                        (user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty)
-                            ? user.profilePictureUrl!
-                            : "https://cdn-icons-png.flaticon.com/512/149/149071.png"
-                    ),
-                    fit: BoxFit.cover,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(43),
+                child: CachedNetworkImage(
+                  imageUrl: profilePicUrl,
+                  width: 86,
+                  height: 86,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                   ),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.person, size: 40, color: Colors.grey),
+                  ),
                 ),
               ),
               const SizedBox(width: 20),
 
-              // স্ট্যাটস
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStatColumn(postCount, "Posts"),
-                    _buildStatColumn("0", "Followers"),
-                    _buildStatColumn("0", "Following"),
+                    // ✅ ফিক্সড: হার্ডকোডেড ০ সরিয়ে অরিজিনাল ডাটা বসানো হলো
+                    _buildStatColumn(followersCount, "Followers"),
+                    _buildStatColumn(followingCount, "Following"),
                   ],
                 ),
               ),
@@ -126,25 +137,18 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // নাম
           Text(
             user?.fullName ?? "Name",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-
           const SizedBox(height: 4),
 
-          // ✅ বায়ো (এখন আর এরর আসবে না)
           Text(
-            (user?.bio != null && user!.bio!.isNotEmpty)
-                ? user.bio!
-                : "No bio available",
+            bioText,
             style: const TextStyle(fontSize: 14),
           ),
-
           const SizedBox(height: 16),
 
-          // এডিট বাটন
           Row(
             children: [
               Expanded(
@@ -170,14 +174,8 @@ class ProfilePage extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          count,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
-        ),
+        Text(count, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black54)),
       ],
     );
   }
@@ -209,7 +207,12 @@ class ProfilePage extends StatelessWidget {
           child: Container(
             color: Colors.grey[200],
             child: post.image_url != null
-                ? Image.network(post.image_url!, fit: BoxFit.cover)
+                ? CachedNetworkImage(
+              imageUrl: post.image_url!,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: Colors.grey[300]),
+              errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.grey),
+            )
                 : const Center(child: Icon(Icons.image, color: Colors.grey)),
           ),
         );

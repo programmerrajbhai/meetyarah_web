@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/data/utils/urls.dart';
-import 'package:meetyarah/ui/login_reg_screens/controllers/auth_service.dart';
 import 'package:meetyarah/ui/profile/controllers/profile_controllers.dart';
 
 class EditProfileController extends GetxController {
@@ -13,23 +12,19 @@ class EditProfileController extends GetxController {
   var isLoading = false.obs;
   var selectedImagePath = ''.obs;
 
-  final AuthService _authService = Get.find<AuthService>();
-
   @override
   void onInit() {
     super.onInit();
     _loadCurrentData();
   }
 
-  // ✅ ফিক্সড: এখন মডেল থেকে ডাটা লোড হবে
   void _loadCurrentData() {
     if (Get.isRegistered<ProfileController>()) {
-      var user = Get.find<ProfileController>().profileUser.value; // userProfile -> profileUser.value
+      var user = Get.find<ProfileController>().profileUser.value;
 
-      // মডেল থেকে ডাটা নিচ্ছি
       nameController.text = user?.fullName ?? "";
-      // আপনার মডেলে 'bio' ফিল্ড নেই, যদি থাকে তবে user?.bio দেবেন। না থাকলে ফাঁকা রাখুন।
-      // bioController.text = user?.bio ?? "";
+      // ✅ ফিক্সড: Bio ডাটা আনকমেন্ট করা হয়েছে
+      bioController.text = user?.bio ?? "";
     }
   }
 
@@ -45,10 +40,10 @@ class EditProfileController extends GetxController {
   Future<void> updateProfile() async {
     isLoading(true);
 
+    // ✅ ফিক্সড: user_id রিমুভ করা হয়েছে কারণ ব্যাকএন্ড টোকেন থেকেই আইডি নিয়ে নেয়
     Map<String, String> fields = {
-      "user_id": _authService.userId ?? "",
-      "full_name": nameController.text,
-      "bio": bioController.text,
+      "full_name": nameController.text.trim(),
+      "bio": bioController.text.trim(),
     };
 
     try {
@@ -56,7 +51,8 @@ class EditProfileController extends GetxController {
         url: Urls.updateProfileApi,
         fields: fields,
         imagePath: selectedImagePath.value.isNotEmpty ? selectedImagePath.value : null,
-        imageKey: 'profile_image',
+        // 🔥 ফিক্সড: ব্যাকএন্ডের সাথে মিলিয়ে 'profile_picture' দেওয়া হলো
+        imageKey: 'profile_picture',
       );
 
       if (response.isSuccess && response.data['status'] == 'success') {
@@ -73,7 +69,7 @@ class EditProfileController extends GetxController {
       }
     } catch (e) {
       print("Update Error: $e");
-      Get.snackbar("Error", "Something went wrong");
+      Get.snackbar("Error", "Something went wrong. Please try again.");
     } finally {
       isLoading(false);
     }

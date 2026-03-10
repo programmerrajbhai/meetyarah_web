@@ -6,6 +6,7 @@ import 'package:meetyarah/ui/create_post/screens/create_post.dart';
 import 'package:meetyarah/ui/dashboard/screens/dashboard_screens.dart';
 import 'package:meetyarah/ui/home/screens/feed_screen.dart' hide ReelScreens;
 import 'package:meetyarah/ui/menu_list/screens/menu_item_screens.dart';
+import 'package:meetyarah/ui/profile/screens/profile_screens.dart';
 import '../../notifications/screens/notification_screens.dart';
 import '../../reels/screens/reel_screens.dart';
 import '../../../logo_widget.dart';
@@ -26,7 +27,7 @@ class _BasescreensState extends State<Basescreens> {
     const FeedScreen(),
     const ReelScreens(),
     const SizedBox(),
-    const ActivityDashboardScreens(),
+    const ProfilePage(),
     MenuScreen(),
   ];
 

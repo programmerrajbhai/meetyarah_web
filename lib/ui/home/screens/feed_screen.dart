@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../reels/screens/reel_screens.dart';
+
 import '../../view_profile/screens/view_profile_screens.dart';
 import '../controllers/get_post_controllers.dart';
 import '../controllers/like_controller.dart';
@@ -15,6 +15,10 @@ import '../../create_post/screens/create_post.dart';
 import '../widgets/like_button.dart';
 import '../widgets/simple_video_player.dart';
 import '../widgets/story_list_widget.dart';
+import '../../reels/screens/reel_screens.dart';
+
+// ✅ ফিক্সড: ProfileController ইমপোর্ট করা হলো
+import '../../profile/controllers/profile_controllers.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -27,21 +31,21 @@ class _FeedScreenState extends State<FeedScreen> {
   final postController = Get.put(GetPostController());
   final likeController = Get.put(LikeController());
 
-  // ✅ ভিডিও লিস্ট রাখার জন্য ভেরিয়েবল
+  // ✅ ফিক্সড: প্রোফাইল ডাটা আনার জন্য কন্ট্রোলার কল করা হলো
+  final profileController = Get.put(ProfileController());
+
+  // ভিডিও লিস্ট রাখার জন্য ভেরিয়েবল
   List<VideoDataModel> _feedVideos = [];
 
-  // ✅ পিন করা ভিডিও (যেটা ভিডিও লিংকের মাধ্যমে এসেছে)
+  // পিন করা ভিডিও (যেটা ভিডিও লিংকের মাধ্যমে এসেছে)
   VideoDataModel? _pinnedVideo;
 
-  // ✅ পিন করা পোস্ট (যেটা পোস্ট লিংকের মাধ্যমে এসেছে)
+  // পিন করা পোস্ট (যেটা পোস্ট লিংকের মাধ্যমে এসেছে)
   dynamic _pinnedPost;
 
   @override
   void initState() {
     super.initState();
-    // ✅ _checkAdBlocker রিমুভ করা হয়েছে
-
-    // ✅ প্রথমে সব ডেটা লোড করা হবে, তারপর লিংক চেক করা হবে
     _initializeFeedData();
   }
 
@@ -56,7 +60,7 @@ class _FeedScreenState extends State<FeedScreen> {
     _loadFeedVideos();
   }
 
-  // ✅ POST Deep Link Logic (?id=...)
+  // POST Deep Link Logic (?id=...)
   void _checkDeepLinkForPosts() {
     if (kIsWeb) {
       try {
@@ -64,7 +68,6 @@ class _FeedScreenState extends State<FeedScreen> {
         if (targetId != null && targetId.isNotEmpty) {
           debugPrint("🔗 Post Deep Link Found: $targetId");
 
-          // পোস্ট লিস্ট থেকে ওই পোস্টটি খোঁজা হচ্ছে
           int index = postController.posts
               .indexWhere((p) => p.post_id.toString() == targetId);
 
@@ -72,7 +75,6 @@ class _FeedScreenState extends State<FeedScreen> {
             var post = postController.posts.removeAt(index);
             setState(() {
               _pinnedPost = post;
-              // পোস্টটি লিস্টের শুরুতেও দিয়ে রাখলাম যাতে রিফ্রেশ করলে হার না যায়
               postController.posts.insert(0, post);
             });
 
@@ -90,7 +92,7 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  // ✅ VIDEO Deep Link Logic (?post_id=...)
+  // VIDEO Deep Link Logic (?post_id=...)
   void _loadFeedVideos() {
     var videos = VideoDataHelper.generateAllVideos();
 
@@ -101,7 +103,7 @@ class _FeedScreenState extends State<FeedScreen> {
         if (targetPostId != null && targetPostId.isNotEmpty) {
           debugPrint("🔗 Video Deep Link Found: $targetPostId");
           int targetIndex =
-              videos.indexWhere((video) => video.url.contains(targetPostId));
+          videos.indexWhere((video) => video.url.contains(targetPostId));
 
           if (targetIndex != -1) {
             var foundVideo = videos.removeAt(targetIndex);
@@ -130,9 +132,7 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  // ✅ ক্লিক হ্যান্ডলার ক্লিন করা হয়েছে (অ্যাড লজিক রিমুভড)
   Future<void> _handlePostClick(dynamic post) async {
-    // সরাসরি পোস্ট ডিটেইলসে যাবে
     Get.to(() => PostDetailPage(post: post));
   }
 
@@ -174,14 +174,14 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   String _getUserName(dynamic post) {
-    if (post.full_name != null && post.full_name!.isNotEmpty)
+    if (post.full_name != null && post.full_name!.isNotEmpty) {
       return post.full_name!;
-    if (post.username != null && post.username!.isNotEmpty)
+    }
+    if (post.username != null && post.username!.isNotEmpty) {
       return post.username!;
+    }
     return "Unknown User";
   }
-
-  // ✅ Regular Post Link Generator (Uses ?id=)
 
   String _getPostLink(String postId) {
     if (kIsWeb) {
@@ -194,7 +194,6 @@ class _FeedScreenState extends State<FeedScreen> {
     Clipboard.setData(ClipboardData(text: _getPostLink(postId)));
   }
 
-  // ✅ Share Options for Regular Posts
   void _showShareOptions(BuildContext context, dynamic post) {
     String shareUrl = _getPostLink(post.post_id.toString());
 
@@ -221,7 +220,6 @@ class _FeedScreenState extends State<FeedScreen> {
                 style: GoogleFonts.inter(
                     fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            // Link Display
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(shareUrl,
@@ -242,8 +240,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 _shareOptionItem(Icons.share, "More Options", Colors.green, () {
                   _handleAction(
                       message: "Opening share options...",
-                      action: () =>
-                          Share.share("Check out this post: $shareUrl"));
+                      action: () => Share.share("Check out this post: $shareUrl"));
                 }),
                 _shareOptionItem(
                     Icons.send_rounded, "Send in App", Colors.purple, () {
@@ -251,9 +248,9 @@ class _FeedScreenState extends State<FeedScreen> {
                 }),
                 _shareOptionItem(
                     Icons.add_to_photos_rounded, "Share to Feed", Colors.orange,
-                    () {
-                  _handleAction(message: "Shared to your timeline! ✍️");
-                }),
+                        () {
+                      _handleAction(message: "Shared to your timeline! ✍️");
+                    }),
               ],
             ),
             const SizedBox(height: 20),
@@ -276,8 +273,7 @@ class _FeedScreenState extends State<FeedScreen> {
           ),
           const SizedBox(height: 8),
           Text(label,
-              style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -302,28 +298,20 @@ class _FeedScreenState extends State<FeedScreen> {
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(10))),
             _buildOptionTile(
-                Icons.bookmark_border,
-                "Save Post",
-                "Add this to your saved items.",
-                () => _handleAction(message: "Post saved to collection! 💾")),
+                Icons.bookmark_border, "Save Post", "Add this to your saved items.",
+                    () => _handleAction(message: "Post saved to collection! 💾")),
             _buildOptionTile(
-                Icons.visibility_off_outlined,
-                "Hide Post",
-                "See fewer posts like this.",
-                () => _handleAction(message: "Post hidden from feed. 🙈")),
+                Icons.visibility_off_outlined, "Hide Post", "See fewer posts like this.",
+                    () => _handleAction(message: "Post hidden from feed. 🙈")),
             const Divider(),
             _buildOptionTile(
-                Icons.copy,
-                "Copy Link",
-                "Copy post url to clipboard.",
-                () => _handleAction(
+                Icons.copy, "Copy Link", "Copy post url to clipboard.",
+                    () => _handleAction(
                     message: "Link copied! 🔗",
                     action: () => _copyPostLink(post.post_id.toString()))),
             _buildOptionTile(
-                Icons.report_gmailerrorred,
-                "Report Post",
-                "I'm concerned about this post.",
-                () => _handleAction(message: "Report submitted. Thanks! 🛡️"),
+                Icons.report_gmailerrorred, "Report Post", "I'm concerned about this post.",
+                    () => _handleAction(message: "Report submitted. Thanks! 🛡️"),
                 isDestructive: true),
             const SizedBox(height: 10),
           ],
@@ -332,16 +320,12 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget _buildOptionTile(
-      IconData icon, String title, String subtitle, VoidCallback onTap,
-      {bool isDestructive = false}) {
+  Widget _buildOptionTile(IconData icon, String title, String subtitle, VoidCallback onTap, {bool isDestructive = false}) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration:
-            BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-        child: Icon(icon,
-            color: isDestructive ? Colors.red : Colors.black87, size: 22),
+        decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+        child: Icon(icon, color: isDestructive ? Colors.red : Colors.black87, size: 22),
       ),
       title: Text(title,
           style: TextStyle(
@@ -349,8 +333,7 @@ class _FeedScreenState extends State<FeedScreen> {
               fontSize: 15,
               color: isDestructive ? Colors.red : Colors.black87)),
       subtitle: subtitle.isNotEmpty
-          ? Text(subtitle,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+          ? Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600]))
           : null,
       onTap: onTap,
     );
@@ -368,7 +351,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
             return RefreshIndicator(
               onRefresh: () async {
-                await _initializeFeedData(); // Refresh both posts and videos
+                await _initializeFeedData();
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -377,116 +360,103 @@ class _FeedScreenState extends State<FeedScreen> {
                   SizedBox(
                     width: feedWidth,
                     child: Obx(() {
-                      if (postController.isLoading.value)
+                      if (postController.isLoading.value) {
                         return _buildShimmer();
+                      }
 
-                      return ListView(
+                      return CustomScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.only(bottom: 50),
-                        children: [
-                          _buildCreatePostBox(),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: _buildCreatePostBox(),
+                          ),
 
-                          const StoryListWidget(), // ✅ এখানে স্টোরি বার বসানো হলো
+                          const SliverToBoxAdapter(
+                            child: StoryListWidget(),
+                          ),
 
-                          // ✅ PINNED VIDEO SECTION (If URL is ?post_id=...)
-                          if (_pinnedVideo != null) ...[
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(20)),
-                                    child: const Text("Shared Video",
-                                        style: TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12)),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  FacebookVideoCard(
-                                    key:
-                                        ValueKey("pinned_${_pinnedVideo!.url}"),
-                                    videoData: _pinnedVideo!,
-                                    allVideosList:
-                                        _feedVideos.map((e) => e.url).toList(),
-                                  ),
-                                ],
+                          if (_pinnedVideo != null)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(20)),
+                                      child: const Text("Shared Video",
+                                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    FacebookVideoCard(
+                                      key: ValueKey("pinned_${_pinnedVideo!.url}"),
+                                      videoData: _pinnedVideo!,
+                                      allVideosList: _feedVideos.map((e) => e.url).toList(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ],
 
-                          // ✅ PINNED POST SECTION (If URL is ?id=...)
-                          if (_pinnedPost != null) ...[
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: Colors.blue.withOpacity(0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(20)),
-                                    child: const Text("Shared Post",
-                                        style: TextStyle(
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12)),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildFacebookPostCard(
-                                      _pinnedPost, 0), // Index 0 as it's pinned
-                                ],
+                          if (_pinnedPost != null)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(20)),
+                                      child: const Text("Shared Post",
+                                          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildFacebookPostCard(_pinnedPost, 0),
+                                  ],
+                                ),
                               ),
                             ),
-                          ],
 
-                          if (postController.posts.isEmpty) _buildEmptyState(),
+                          if (postController.posts.isEmpty)
+                            SliverToBoxAdapter(
+                              child: _buildEmptyState(),
+                            ),
 
-                          // ✅ POST LIST Builder
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: postController.posts.length,
-                            itemBuilder: (context, index) {
-                              final post = postController.posts[index];
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                final post = postController.posts[index];
+                                Widget videoWidget = const SizedBox.shrink();
 
-                              // ✅ VIDEO INJECTION LOGIC
-                              Widget videoWidget = const SizedBox.shrink();
-                              if (_feedVideos.isNotEmpty &&
-                                  (index + 1) % 10 == 0) {
-                                int videoIndex =
-                                    ((index + 1) ~/ 10) % _feedVideos.length;
-                                videoWidget = Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: FacebookVideoCard(
-                                    key: ValueKey(
-                                        "feed_video_${_feedVideos[videoIndex].url}"),
-                                    videoData: _feedVideos[videoIndex],
-                                    allVideosList:
-                                        _feedVideos.map((e) => e.url).toList(),
-                                  ),
+                                if (_feedVideos.isNotEmpty && (index + 1) % 10 == 0) {
+                                  int videoIndex = ((index + 1) ~/ 10) % _feedVideos.length;
+                                  videoWidget = Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                    child: FacebookVideoCard(
+                                      key: ValueKey("feed_video_${_feedVideos[videoIndex].url}"),
+                                      videoData: _feedVideos[videoIndex],
+                                      allVideosList: _feedVideos.map((e) => e.url).toList(),
+                                    ),
+                                  );
+                                }
+
+                                return Column(
+                                  children: [
+                                    _buildFacebookPostCard(post, index),
+                                    videoWidget,
+                                  ],
                                 );
-                              }
+                              },
+                              childCount: postController.posts.length,
+                            ),
+                          ),
 
-                              // Don't show pinned post again in the list (Optional check, but simple insert at 0 is safer)
-                              return Column(
-                                children: [
-                                  _buildFacebookPostCard(post, index),
-                                  // ✅ বিজ্ঞাপন রিমুভ করা হয়েছে
-                                  videoWidget,
-                                ],
-                              );
-                            },
+                          const SliverToBoxAdapter(
+                            child: SizedBox(height: 50),
                           ),
                         ],
                       );
@@ -499,7 +469,6 @@ class _FeedScreenState extends State<FeedScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            // ✅ Sponsored এবং অ্যাড সেকশন রিমুভ করা হয়েছে
                             _buildFriendSuggestions(),
                           ],
                         ),
@@ -514,7 +483,7 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  // --- Widgets ---
+  // 🔥 ১. ফিক্সড: Create Post Box-এ ইউজারের অরিজিনাল ছবি শো করানো হয়েছে
   Widget _buildCreatePostBox() {
     return Card(
       margin: const EdgeInsets.fromLTRB(0, 8, 0, 8),
@@ -527,17 +496,39 @@ class _FeedScreenState extends State<FeedScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            const CircleAvatar(
-                radius: 20,
-                backgroundImage:
-                    NetworkImage("https://i.pravatar.cc/150?img=12")),
+            // ✅ Obx ব্যবহার করা হয়েছে যাতে প্রোফাইল পিকচার রিয়েল-টাইম আপডেট হয়
+            Obx(() {
+              var user = profileController.profileUser.value;
+
+              String profilePicUrl = (user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty)
+                  ? user.profilePictureUrl!
+                  : "https://ui-avatars.com/api/?name=${Uri.encodeComponent(user?.fullName ?? "User")}&background=random";
+
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: CachedNetworkImage(
+                  imageUrl: profilePicUrl,
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.person, color: Colors.grey),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.person, color: Colors.grey),
+                  ),
+                ),
+              );
+            }),
+
             const SizedBox(width: 10),
             Expanded(
               child: _FeedbackButton(
                 onTap: () => Get.to(() => const CreatePostScreen()),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                       color: const Color(0xFFF0F2F5),
                       borderRadius: BorderRadius.circular(25)),
@@ -556,13 +547,16 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-// ২. হেল্পার ফাংশন (ক্লাসের ভেতরে বা বাইরে রাখতে পারেন)
   bool isVideo(String url) {
     String ext = url.split('.').last.toLowerCase();
     return ['mp4', 'mov', 'avi', 'mkv', 'webm'].contains(ext);
   }
 
   Widget _buildFacebookPostCard(dynamic post, int index) {
+    String profileImageUrl = (post.profile_picture_url != null && post.profile_picture_url.toString().isNotEmpty)
+        ? post.profile_picture_url.toString()
+        : "https://ui-avatars.com/api/?name=${Uri.encodeComponent(_getUserName(post))}&background=random";
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
       elevation: 0.5,
@@ -573,28 +567,35 @@ class _FeedScreenState extends State<FeedScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Header Section ---
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // 🔥 [UPDATED] প্রোফাইল এরিয়া এখন ক্লিকেবল
                 Expanded(
                   child: InkWell(
                     onTap: () {
-                      // ✅ প্রোফাইলে নেভিগেট করার লজিক
                       int userId = int.tryParse(post.user_id.toString()) ?? 0;
                       if (userId != 0) {
                         Get.to(() => ViewProfileScreen(userId: userId));
-                      } else {
-                        print("Error: User ID not found in post data");
                       }
                     },
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(
-                              post.profile_picture_url ?? "https://via.placeholder.com/150"
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: CachedNetworkImage(
+                            imageUrl: profileImageUrl,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.person, color: Colors.white),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -617,8 +618,6 @@ class _FeedScreenState extends State<FeedScreen> {
                     ),
                   ),
                 ),
-
-                // অপশন বাটন (এটি ক্লিকের বাইরে থাকবে)
                 IconButton(
                   icon: const Icon(Icons.more_horiz),
                   onPressed: () => _showPostOptions(context, post),
@@ -627,7 +626,6 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
 
-          // --- Content Section ---
           InkWell(
             onTap: () => _handlePostClick(post),
             child: Column(
@@ -635,20 +633,14 @@ class _FeedScreenState extends State<FeedScreen> {
               children: [
                 if (post.post_content != null && post.post_content!.isNotEmpty)
                   Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       child: Text(post.post_content!,
-                          style: const TextStyle(
-                              fontSize: 16,
-                              height: 1.4,
-                              color: Colors.black87))),
+                          style: const TextStyle(fontSize: 16, height: 1.4, color: Colors.black87))),
                 const SizedBox(height: 8),
 
-                // ✅ PROFESSIONAL VIDEO PLAYER INTEGRATION
                 if (post.image_url != null && post.image_url!.isNotEmpty)
                   Container(
                     width: double.infinity,
-                    height: 400, // ফিক্সড হাইট (ভিডিও এবং ইমেজের জন্য)
                     decoration: const BoxDecoration(color: Colors.black),
                     child: isVideo(post.image_url!)
                         ? ClipRRect(
@@ -658,17 +650,16 @@ class _FeedScreenState extends State<FeedScreen> {
                       tag: "post_image_${post.post_id}_$index",
                       child: CachedNetworkImage(
                         imageUrl: post.image_url!,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                         placeholder: (context, url) => Container(
+                          height: 300,
                           color: Colors.grey[200],
-                          child: const Center(
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2)),
+                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                         ),
-                        errorWidget: (context, url, error) => const Icon(
-                            Icons.broken_image,
-                            color: Colors.grey,
-                            size: 50),
+                        errorWidget: (context, url, error) => const SizedBox(
+                          height: 300,
+                          child: Icon(Icons.broken_image, color: Colors.grey, size: 50),
+                        ),
                       ),
                     ),
                   ),
@@ -676,7 +667,6 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
 
-          // --- Footer Section ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
@@ -686,22 +676,18 @@ class _FeedScreenState extends State<FeedScreen> {
                   _buildReactionIcon(Icons.thumb_up, Colors.blue),
                   if ((post.like_count ?? 0) > 0) ...[
                     const SizedBox(width: 6),
-                    Text("${post.like_count}",
-                        style:
-                        const TextStyle(color: Colors.grey, fontSize: 13))
+                    Text("${post.like_count}", style: const TextStyle(color: Colors.grey, fontSize: 13))
                   ]
                 ]),
                 InkWell(
                     onTap: () => _handlePostClick(post),
                     child: Text("${post.comment_count ?? 0} Comments",
-                        style:
-                        const TextStyle(color: Colors.grey, fontSize: 13))),
+                        style: const TextStyle(color: Colors.grey, fontSize: 13))),
               ],
             ),
           ),
           const Divider(height: 0, thickness: 0.5),
 
-          // --- Action Buttons ---
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
@@ -724,6 +710,7 @@ class _FeedScreenState extends State<FeedScreen> {
       ),
     );
   }
+
   Widget _buildReactionButton(dynamic post, int index) {
     return LikeButton(
         isLiked: post.isLiked,
@@ -733,16 +720,14 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _actionButton({required IconData icon, required String label, required VoidCallback onTap}) {
-    return _FeedbackButton(
-        onTap: onTap, child: _actionButtonContent(icon, label));
+    return _FeedbackButton(onTap: onTap, child: _actionButtonContent(icon, label));
   }
 
   Widget _actionButtonContent(IconData icon, String label, {Color color = Colors.grey}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon,
-            color: color == Colors.grey ? Colors.grey[600] : color, size: 20),
+        Icon(icon, color: color == Colors.grey ? Colors.grey[600] : color, size: 20),
         const SizedBox(width: 6),
         Text(label,
             style: TextStyle(
@@ -761,14 +746,12 @@ class _FeedScreenState extends State<FeedScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("People You May Know",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text("People You May Know", style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
         ListView.builder(
             shrinkWrap: true,
             itemCount: 2,
-            itemBuilder: (c, i) => const ListTile(
-                title: Text("User Name"), leading: CircleAvatar())),
+            itemBuilder: (c, i) => const ListTile(title: Text("User Name"), leading: CircleAvatar())),
       ],
     );
   }
@@ -786,10 +769,7 @@ class _FeedScreenState extends State<FeedScreen> {
         itemBuilder: (c, i) => Shimmer.fromColors(
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
-            child: Container(
-                height: 250,
-                color: Colors.white,
-                margin: const EdgeInsets.all(10))));
+            child: Container(height: 250, color: Colors.white, margin: const EdgeInsets.all(10))));
   }
 }
 
@@ -814,9 +794,7 @@ class _FeedbackButtonState extends State<_FeedbackButton> {
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        transform: _isPressed
-            ? Matrix4.diagonal3Values(0.95, 0.95, 1.0)
-            : Matrix4.identity(),
+        transform: _isPressed ? Matrix4.diagonal3Values(0.95, 0.95, 1.0) : Matrix4.identity(),
         decoration: BoxDecoration(
             color: _isPressed ? Colors.grey.shade200 : Colors.transparent,
             borderRadius: BorderRadius.circular(8)),
