@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Clipboard এর জন্য
 import 'package:video_player/video_player.dart';
 
 class SimpleVideoPlayer extends StatefulWidget {
@@ -11,9 +12,10 @@ class SimpleVideoPlayer extends StatefulWidget {
 }
 
 class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool _isInitialized = false;
   bool _isError = false;
+  String _errorMessage = "";
 
   @override
   void initState() {
@@ -23,18 +25,26 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> {
 
   Future<void> _initializeVideo() async {
     try {
-      // 🚀 URL e kono space ba vul thakle seta auto-fix korbe Uri.encodeFull
-      String safeUrl = Uri.encodeFull(widget.videoUrl.trim());
+      String cleanUrl = widget.videoUrl.trim();
+      Uri uri = Uri.parse(cleanUrl);
 
-      // ignore: deprecated_member_use
-      _controller = VideoPlayerController.network(safeUrl);
+      // 🚀 THE MAGIC FIX: Hostinger ফায়ারওয়াল বাইপাস করার জন্য Fake Chrome User-Agent
+      _controller = VideoPlayerController.networkUrl(
+        uri,
+        httpHeaders: {
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-A205U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+          'Accept': '*/*',
+          'Connection': 'keep-alive',
+        },
+      );
 
-      await _controller.initialize();
-      _controller.setLooping(true); // Video shesh hole abar shuru hobe
+      await _controller!.initialize();
+      _controller!.setLooping(true);
 
       if (mounted) {
         setState(() {
           _isInitialized = true;
+          _isError = false;
         });
       }
     } catch (e) {
@@ -42,6 +52,7 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> {
       if (mounted) {
         setState(() {
           _isError = true;
+          _errorMessage = e.toString();
         });
       }
     }
@@ -49,48 +60,68 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> {
 
   @override
   void dispose() {
-    // 🚀 Scroll kore chole gele video pause & dispose hoye jabe (Memory save korbe)
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   void _togglePlayPause() {
+    if (_controller == null || !_isInitialized) return;
+
     setState(() {
-      if (_controller.value.isPlaying) {
-        _controller.pause();
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
       } else {
-        _controller.play();
+        _controller!.play();
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // ❌ Jodi video link e kono problem thake (Error State)
+    // ❌ Error State
     if (_isError) {
       return Container(
-        height: 200,
+        height: 250,
         width: double.infinity,
         color: Colors.black87,
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.broken_image_outlined, color: Colors.white54, size: 40),
-              SizedBox(height: 8),
-              Text("Video not available", style: TextStyle(color: Colors.white54, fontSize: 13)),
-            ],
-          ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.broken_image_outlined, color: Colors.redAccent, size: 40),
+            const SizedBox(height: 8),
+            const Text("Video failed to load", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(
+              _errorMessage,
+              style: const TextStyle(color: Colors.white54, fontSize: 10),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.white24),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: widget.videoUrl));
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Link copied! Paste in Chrome to test.", style: TextStyle(color: Colors.white)), backgroundColor: Colors.blue)
+                );
+              },
+              icon: const Icon(Icons.copy, size: 16, color: Colors.white),
+              label: const Text("Copy Link", style: TextStyle(color: Colors.white)),
+            )
+          ],
         ),
       );
     }
 
-    // ⏳ Video Initial Load (Shimmer/Loading State)
-    if (!_isInitialized) {
+    // ⏳ Loading State
+    if (!_isInitialized || _controller == null) {
       return Container(
         height: 250,
         width: double.infinity,
-        color: Colors.grey[200], // Facebook er moton halka grey loading
+        color: Colors.grey[200],
         child: const Center(
           child: SizedBox(
             height: 30, width: 30,
@@ -100,21 +131,19 @@ class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> {
       );
     }
 
-    // ✅ Video Play State
+    // ✅ Playing State
     return Container(
-      color: Colors.black, // Video background kalo
+      color: Colors.black,
       child: AspectRatio(
-        aspectRatio: _controller.value.aspectRatio,
+        aspectRatio: _controller!.value.aspectRatio,
         child: Stack(
           alignment: Alignment.center,
           children: [
             GestureDetector(
               onTap: _togglePlayPause,
-              child: VideoPlayer(_controller),
+              child: VideoPlayer(_controller!),
             ),
-
-            // Play Button Overlay (Jodi pause thake tokhon dekhabe)
-            if (!_controller.value.isPlaying)
+            if (!_controller!.value.isPlaying)
               GestureDetector(
                 onTap: _togglePlayPause,
                 child: Container(
