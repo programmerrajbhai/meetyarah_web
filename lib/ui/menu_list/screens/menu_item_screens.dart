@@ -7,6 +7,8 @@ import 'package:meetyarah/ui/profile/screens/profile_screens.dart';
 
 import '../../login_reg_screens/controllers/auth_service.dart';
 import '../../profile/controllers/profile_controllers.dart';
+// ✅ ফিক্সড: নতুন স্ক্রিনটি ইমপোর্ট করা হলো
+import '../../spoken_english/screens/spoken_english_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   MenuScreen({Key? key}) : super(key: key);
@@ -53,7 +55,7 @@ class MenuScreen extends StatelessWidget {
                     )
                   ],
                 ),
-                
+
                 const SizedBox(height: 25),
 
                 // --- 2. Modern Profile Card ---
@@ -64,7 +66,12 @@ class MenuScreen extends StatelessWidget {
                 // --- 3. Education & Career (Hero Section) ---
                 Text("Learning Hub 🚀", style: _sectionTitleStyle()),
                 const SizedBox(height: 15),
-                _buildEducationHeroCard(), // ✅ ফিক্সড উইজেট
+                _buildEducationHeroCard(),
+
+                const SizedBox(height: 15),
+
+                // ✅ ফিক্সড: নতুন Spoken English Card যুক্ত করা হলো
+                _buildSpokenEnglishCard(),
 
                 const SizedBox(height: 30),
 
@@ -105,7 +112,7 @@ class MenuScreen extends StatelessWidget {
 
   // --- WIDGETS ---
 
-  // 1. Modern Profile Card with Glass Effect
+  // 1. Modern Profile Card
   Widget _buildModernProfileCard() {
     return Obx(() {
       final user = controller.profileUser.value;
@@ -136,7 +143,7 @@ class MenuScreen extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 32,
                     backgroundImage: NetworkImage(
-                      user?.profilePictureUrl ?? "https://i.pravatar.cc/150?img=12"
+                        user?.profilePictureUrl ?? "https://i.pravatar.cc/150?img=12"
                     ),
                   ),
                 ),
@@ -175,18 +182,17 @@ class MenuScreen extends StatelessWidget {
     });
   }
 
-  // ✅ 2. Education Hero Card (FIXED OVERFLOW)
+  // 2. Education Hero Card
   Widget _buildEducationHeroCard() {
     return GestureDetector(
       onTap: () => Get.to(() => const EducationScreen()),
       child: Container(
         width: double.infinity,
-        // height: 140, // ❌ REMOVED: ফিক্সড হাইট সরিয়ে দিয়েছি যাতে ওভারফ্লো না হয়
-        constraints: const BoxConstraints(minHeight: 150), // ✅ ADDED: মিনিমাম হাইট সেট করেছি
+        constraints: const BoxConstraints(minHeight: 120),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: const LinearGradient(
-            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], // Deep Purple to Blue
+            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -200,48 +206,34 @@ class MenuScreen extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Background Pattern
             Positioned(
-              right: -20,
-              top: -20,
-              child: Icon(Icons.school, size: 150, color: Colors.white.withOpacity(0.1)),
+              right: -10,
+              top: -10,
+              child: Icon(Icons.school, size: 120, color: Colors.white.withOpacity(0.15)),
             ),
-            // Content
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min, // ✅ ADDED: কন্টেন্ট অনুযায়ী সাইজ নেবে
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     "Education Hub",
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
-                    "SSC • HSC • Job Prep • Skills",
+                    "SSC • HSC • Job Prep",
                     style: GoogleFonts.poppins(
                       color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 15), // একটু স্পেস বাড়ানো হয়েছে
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      "Start Learning →",
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                  )
                 ],
               ),
             ),
@@ -251,7 +243,70 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  // 3. Modern Grid for Social/Games
+  // ✅ 3. NEW: Spoken English Video Course Card
+  Widget _buildSpokenEnglishCard() {
+    return GestureDetector(
+      onTap: () => Get.to(() => const SpokenEnglishScreen()),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)], // Warm Red to Orange
+            begin: Alignment.bottomLeft,
+            end: Alignment.topRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF6B6B).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 36),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Spoken English",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Free Video Course 🎬",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 4. Modern Grid for Social/Games
   Widget _buildModernGrid() {
     final List<Map<String, dynamic>> items = [
       {'icon': Icons.group_rounded, 'label': 'Community', 'color': Colors.blueAccent},
@@ -306,9 +361,9 @@ class MenuScreen extends StatelessWidget {
                   Text(
                     item['label'],
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Colors.black87
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Colors.black87
                     ),
                   ),
                 ],
@@ -320,7 +375,7 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  // 4. Modern Settings Tile
+  // 5. Modern Settings Tile
   Widget _buildModernSettingsTile(IconData icon, String title, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -348,7 +403,7 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
-  // 5. Gen Z Style Logout Button
+  // 6. Gen Z Style Logout Button
   Widget _buildLogoutButton() {
     return SizedBox(
       width: double.infinity,
