@@ -33,7 +33,7 @@ class ProfileController extends GetxController {
       isLoading(true);
 
       String url = "${Urls.getUserProfileApi}?user_id=$myIdStr";
-      networkResponse response = await networkClient.getRequest(url: url);
+      NetworkResponse response = await NetworkClient.getRequest(url: url);
 
       if (response.isSuccess && response.data != null && response.data['status'] == 'success') {
 

@@ -28,7 +28,7 @@ class CommentController extends GetxController {
       isLoading(true);
       String url = "${Urls.getCommentsApi}?post_id=$postId";
 
-      networkResponse response = await networkClient.getRequest(url: url);
+      NetworkResponse response = await NetworkClient.getRequest(url: url);
 
       if (response.isSuccess && response.data?['status'] == 'success') {
         List<dynamic> data = response.data!['comments'];
@@ -58,7 +58,7 @@ class CommentController extends GetxController {
       commentTextController.clear();
       FocusScope.of(Get.context!).unfocus();
 
-      networkResponse response = await networkClient.postRequest(
+      NetworkResponse response = await NetworkClient.postRequest(
         url: Urls.addCommentApi,
         body: {
           'post_id': postId,

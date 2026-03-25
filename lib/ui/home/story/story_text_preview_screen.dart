@@ -31,7 +31,7 @@ class _StoryTextPreviewScreenState extends State<StoryTextPreviewScreen> {
 
     setState(() => sharing = true);
 
-    final res = await networkClient.postRequest(
+    final res = await NetworkClient.postRequest(
       url: Urls.uploadStoryTextApi, // ✅ new api
       body: {"text": text},
     );

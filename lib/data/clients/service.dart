@@ -4,13 +4,13 @@ import 'package:get/get.dart' hide Response;
 import 'package:image_picker/image_picker.dart';
 import '../../ui/login_reg_screens/controllers/auth_service.dart';
 
-class networkResponse {
+class NetworkResponse {
   final bool isSuccess;
   final int statusCode;
   final dynamic data;
   final String? errorMessage;
 
-  networkResponse({
+  NetworkResponse({
     required this.isSuccess,
     required this.statusCode,
     this.data,
@@ -18,7 +18,7 @@ class networkResponse {
   });
 }
 
-class networkClient {
+class NetworkClient {
   // ---------------- HEADERS ----------------
   static Map<String, String> _getHeaders() {
     final headers = {
@@ -39,7 +39,7 @@ class networkClient {
   }
 
   // ---------------- GET ----------------
-  static Future<networkResponse> getRequest({
+  static Future<NetworkResponse> getRequest({
     required String url,
     Map<String, String>? headers,
   }) async {
@@ -50,7 +50,7 @@ class networkClient {
       );
       return _handleResponse(response);
     } catch (e) {
-      return networkResponse(
+      return NetworkResponse(
         isSuccess: false,
         errorMessage: e.toString(),
         statusCode: -1,
@@ -59,7 +59,7 @@ class networkClient {
   }
 
   // ---------------- POST ----------------
-  static Future<networkResponse> postRequest({
+  static Future<NetworkResponse> postRequest({
     required String url,
     Map<String, dynamic>? body,
     Map<String, String>? headers,
@@ -72,7 +72,7 @@ class networkClient {
       );
       return _handleResponse(response);
     } catch (e) {
-      return networkResponse(
+      return NetworkResponse(
         isSuccess: false,
         errorMessage: e.toString(),
         statusCode: -1,
@@ -80,18 +80,20 @@ class networkClient {
     }
   }
 
-  // ---------------- MULTIPART (FIXED) ----------------
-  static Future<networkResponse> multipartRequest({
+  // ---------------- MULTIPART (FIXED FOR SINGLE & MULTIPLE) ----------------
+  static Future<NetworkResponse> multipartRequest({
     required String url,
     required Map<String, String> fields,
+    required String imageKey,
 
-    /// ✅ NEW (Web + Mobile)
+    /// ✅ SINGLE FILE (Web + Mobile)
     XFile? imageFile,
+
+    /// ✅ MULTIPLE FILES (New Feature)
+    List<XFile>? imageFiles,
 
     /// ✅ OLD SUPPORT (won’t break old code)
     String? imagePath,
-
-    required String imageKey,
   }) async {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(url));
@@ -101,11 +103,12 @@ class networkClient {
       request.headers.addAll(headers);
       request.fields.addAll(fields);
 
-      // ✅ Convert old imagePath → XFile
+      // ✅ 1. Convert old imagePath → XFile (Single)
       if (imageFile == null && imagePath != null && imagePath.isNotEmpty) {
         imageFile = XFile(imagePath);
       }
 
+      // ✅ 2. Single Image Upload
       if (imageFile != null) {
         final bytes = await imageFile.readAsBytes();
         request.files.add(
@@ -117,11 +120,28 @@ class networkClient {
         );
       }
 
+      // 🚀 3. Multiple Images Upload (New Logic)
+      if (imageFiles != null && imageFiles.isNotEmpty) {
+        // লারাভেল বা পিএইচপি-তে মাল্টিপল ফাইল রিসিভ করতে key এর শেষে [] থাকতে হয়
+        String arrayKey = imageKey.endsWith('[]') ? imageKey : '$imageKey[]';
+
+        for (var file in imageFiles) {
+          final bytes = await file.readAsBytes();
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              arrayKey,
+              bytes,
+              filename: file.name,
+            ),
+          );
+        }
+      }
+
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
       return _handleResponse(response);
     } catch (e) {
-      return networkResponse(
+      return NetworkResponse(
         isSuccess: false,
         errorMessage: e.toString(),
         statusCode: -1,
@@ -130,23 +150,23 @@ class networkClient {
   }
 
   // ---------------- RESPONSE HANDLER ----------------
-  static networkResponse _handleResponse(http.Response response) {
+  static NetworkResponse _handleResponse(http.Response response) {
     try {
       final data = jsonDecode(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return networkResponse(
+        return NetworkResponse(
           isSuccess: true,
           data: data,
           statusCode: response.statusCode,
         );
       }
-      return networkResponse(
+      return NetworkResponse(
         isSuccess: false,
         errorMessage: data['message'] ?? "Request failed",
         statusCode: response.statusCode,
       );
     } catch (_) {
-      return networkResponse(
+      return NetworkResponse(
         isSuccess: false,
         errorMessage: "Invalid server response",
         statusCode: response.statusCode,

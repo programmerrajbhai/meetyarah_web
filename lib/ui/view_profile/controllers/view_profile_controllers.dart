@@ -32,7 +32,7 @@ class ViewProfileController extends GetxController {
       final url = "${Urls.getUserProfileApi}?user_id=$userId";
       print("🚀 Loading Profile: $url");
 
-      final response = await networkClient.getRequest(url: url);
+      final response = await NetworkClient.getRequest(url: url);
 
       if (response.isSuccess == true && response.data != null) {
         final data = response.data;
@@ -85,7 +85,7 @@ class ViewProfileController extends GetxController {
     try {
       final url = isFollowing.value ? Urls.followUserApi : Urls.unfollowUserApi;
 
-      final response = await networkClient.postRequest(
+      final response = await NetworkClient.postRequest(
         url: url,
         body: {"target_user_id": targetUserId},
       );

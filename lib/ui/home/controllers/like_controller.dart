@@ -37,7 +37,7 @@ class LikeController extends GetxController {
 
     // --- 2. API Call (Background e) ---
     try {
-      networkResponse response = await networkClient.postRequest(
+      NetworkResponse response = await NetworkClient.postRequest(
         url: Urls.likePostApi,
         body: {
           "user_id": userId,

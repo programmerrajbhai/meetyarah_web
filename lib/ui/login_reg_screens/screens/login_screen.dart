@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart'; // ফন্ট স্টাইলের জন্য
+import 'package:google_fonts/google_fonts.dart';
 import 'package:meetyarah/assetsPath/image_url.dart';
 import 'package:meetyarah/assetsPath/textColors.dart';
 import 'package:meetyarah/ui/login_reg_screens/controllers/loginController.dart';
@@ -24,17 +24,15 @@ class LoginScreen extends StatelessWidget {
           // --- LEFT SIDE: HERO IMAGE (Only for Desktop/Web) ---
           if (isWebDesktop)
             Expanded(
-              flex: 6, // 60% জায়গা নিবে
+              flex: 6,
               child: Container(
                 decoration: const BoxDecoration(
                   image: DecorationImage(
-                    // একটি সুন্দর কাপল বা সোশ্যাল ভাইব ইমেজ
                     image: NetworkImage("https://images.unsplash.com/photo-1516054575922-f0b8eeadec1a?q=80&w=2070&auto=format&fit=crop"),
                     fit: BoxFit.cover,
                   ),
                 ),
                 child: Container(
-                  // ইমেজের ওপর গ্রেডিয়েন্ট ওভারলে (টেক্সট সুন্দর দেখানোর জন্য)
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -77,7 +75,7 @@ class LoginScreen extends StatelessWidget {
 
           // --- RIGHT SIDE: LOGIN FORM ---
           Expanded(
-            flex: isWebDesktop ? 4 : 1, // মোবাইলে ১০০%, ডেস্কটপে ৪০%
+            flex: isWebDesktop ? 4 : 1,
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -85,7 +83,6 @@ class LoginScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Mobile Logo (Only visible on small screens)
                     if (!isWebDesktop) ...[
                       Image.asset(
                         ImagePath.appLogotransparent,
@@ -94,7 +91,6 @@ class LoginScreen extends StatelessWidget {
                       const SizedBox(height: 30),
                     ],
 
-                    // Header Text
                     Text(
                       "Welcome Back! 👋",
                       style: GoogleFonts.poppins(
@@ -133,7 +129,7 @@ class LoginScreen extends StatelessWidget {
                       hint: "Enter your password",
                       icon: Icons.lock_outline,
                       isPassword: true,
-                      onSubmitted: (_) => loginController.LoginUser(),
+                      onSubmitted: (_) => loginController.loginUser(), // FIXED HERE
                     ),
 
                     // FORGOT PASSWORD
@@ -159,7 +155,7 @@ class LoginScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: loginController.isLoading.value
                             ? null
-                            : () => loginController.LoginUser(),
+                            : () => loginController.loginUser(), // FIXED HERE
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorPath.deepBlue,
                           shape: RoundedRectangleBorder(
@@ -279,7 +275,7 @@ class LoginScreen extends StatelessWidget {
         hintStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
         prefixIcon: Icon(icon, color: Colors.grey[500], size: 20),
         filled: true,
-        fillColor: Colors.grey[50], // খুব হালকা গ্রে ব্যাকগ্রাউন্ড
+        fillColor: Colors.grey[50],
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

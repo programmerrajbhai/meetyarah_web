@@ -22,7 +22,7 @@ class NotificationController extends GetxController {
   void fetchNotifications() async {
     try {
       isLoading(true);
-      networkResponse response = await networkClient.getRequest(url: Urls.getNotificationsApi);
+      NetworkResponse response = await NetworkClient.getRequest(url: Urls.getNotificationsApi);
 
       if (response.isSuccess) {
         if (response.data['status'] == 'success') {
@@ -59,7 +59,7 @@ class NotificationController extends GetxController {
       Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
 
       String url = "${Urls.getSinglePostApi}?post_id=$postId";
-      networkResponse response = await networkClient.getRequest(url: url);
+      NetworkResponse response = await NetworkClient.getRequest(url: url);
 
       Get.back(); // লোডিং ডায়ালগ বন্ধ
       isNavigating(false);

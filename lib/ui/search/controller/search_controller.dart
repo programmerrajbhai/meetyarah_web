@@ -37,8 +37,8 @@ class SearchUserController extends GetxController {
       final String url =
           "${Urls.searchUsersApi}?q=${Uri.encodeComponent(q)}&limit=20";
 
-      final networkResponse response =
-      await networkClient.getRequest(url: url);
+      final NetworkResponse response =
+      await NetworkClient.getRequest(url: url);
 
       if (response.isSuccess == true) {
         final data = response.data;

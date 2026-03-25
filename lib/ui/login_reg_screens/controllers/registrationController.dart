@@ -51,7 +51,7 @@ class RegistrationController extends GetxController {
         "password": password,
       };
 
-      networkResponse response = await networkClient.postRequest(
+      NetworkResponse response = await NetworkClient.postRequest(
         url: Urls.registerApi,
         body: responseBody,
       );

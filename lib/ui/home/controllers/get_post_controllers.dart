@@ -62,7 +62,7 @@ class GetPostController extends GetxController {
 
       print("🔹 Fetching Posts from: $url");
 
-      networkResponse response = await networkClient.getRequest(url: url);
+      NetworkResponse response = await NetworkClient.getRequest(url: url);
 
       if (response.statusCode == 200 && response.data != null) {
         if (response.data['status'] == 'success') {

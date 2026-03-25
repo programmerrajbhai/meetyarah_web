@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:meetyarah/data/clients/service.dart';
 import 'package:meetyarah/ui/home/screens/baseScreens.dart';
 import '../../../data/utils/urls.dart';
-import '../model/user_model.dart'; // UserModel ইমপোর্ট করতে হবে
+import '../model/user_model.dart';
 import 'auth_service.dart';
 
 class LoginController extends GetxController {
@@ -11,12 +11,13 @@ class LoginController extends GetxController {
   final passwordCtrl = TextEditingController();
 
   var isLoading = false.obs;
-  var isGuestLoading = false.obs; // গেস্ট লোডিং এর জন্য আলাদা ভেরিয়েবল
+  var isGuestLoading = false.obs;
 
   final AuthService _authService = Get.find<AuthService>();
 
   // --- Regular Login ---
-  Future<void> LoginUser() async {
+  // FIXED: camelCase for method name (loginUser)
+  Future<void> loginUser() async {
     String email = emailOrPhoneCtrl.text.trim();
     String password = passwordCtrl.text.trim();
 
@@ -33,7 +34,8 @@ class LoginController extends GetxController {
         "password": password,
       };
 
-      networkResponse response = await networkClient.postRequest(
+      // FIXED: PascalCase for Classes (NetworkResponse & NetworkClient)
+      NetworkResponse response = await NetworkClient.postRequest(
         url: Urls.loginApi,
         body: requestBody,
       );
@@ -64,23 +66,19 @@ class LoginController extends GetxController {
     try {
       isGuestLoading(true);
 
-      // TODO: তোমার ব্যাকএন্ডে যদি Guest API থাকে, সেটি এখানে কল করবে।
-      // বর্তমানে আমি একটি ডামি বা লোকাল গেস্ট সেশন তৈরি করে দিচ্ছি।
-
-      // সিমুলেটেড API কল (বাস্তবে এখানে API কল হবে)
+      // Simulated API call
       await Future.delayed(const Duration(seconds: 1));
 
-      // ডামি গেস্ট ডাটা (সার্ভার থেকে আসলে সেটাই ব্যবহার করবে)
+      // Dummy guest data
       String guestToken = "guest_token_${DateTime.now().millisecondsSinceEpoch}";
       Map<String, dynamic> guestUser = {
         "id": "guest_001",
         "name": "Guest User",
         "email": "guest@meetyarah.com",
-        "avatar": "", // ডিফল্ট আভাটার
+        "avatar": "",
         "is_guest": true
       };
 
-      // AuthService-এ সেভ করা হচ্ছে (Web-এ এটি লোকাল স্টোরেজে থেকে যাবে)
       await _authService.saveUserSession(guestToken, guestUser);
 
       Get.snackbar('Welcome', "You are logged in as Guest",

@@ -35,7 +35,7 @@ class StoryController extends GetxController {
     try {
       if (storyList.isEmpty) isLoading(true);
 
-      final response = await networkClient.getRequest(url: Urls.getActiveStoriesApi);
+      final response = await NetworkClient.getRequest(url: Urls.getActiveStoriesApi);
 
       if (response.isSuccess && response.data != null && response.data['status'] == 'success') {
         final rawList = response.data['stories'];
@@ -101,7 +101,7 @@ class StoryController extends GetxController {
       isUploading(true);
       safeSnack("Uploading story...");
 
-      final res = await networkClient.multipartRequest(
+      final res = await NetworkClient.multipartRequest(
         url: Urls.uploadStoryApi,
         fields: {},          // token middleware থেকে user নেয়
         imageFile: imageFile,

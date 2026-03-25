@@ -47,7 +47,7 @@ class EditProfileController extends GetxController {
     };
 
     try {
-      var response = await networkClient.multipartRequest(
+      var response = await NetworkClient.multipartRequest(
         url: Urls.updateProfileApi,
         fields: fields,
         imagePath: selectedImagePath.value.isNotEmpty ? selectedImagePath.value : null,
