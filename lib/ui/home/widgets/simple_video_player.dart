@@ -3,134 +3,131 @@ import 'package:video_player/video_player.dart';
 
 class SimpleVideoPlayer extends StatefulWidget {
   final String videoUrl;
+
   const SimpleVideoPlayer({super.key, required this.videoUrl});
 
   @override
   State<SimpleVideoPlayer> createState() => _SimpleVideoPlayerState();
 }
 
-class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> with AutomaticKeepAliveClientMixin {
+class _SimpleVideoPlayerState extends State<SimpleVideoPlayer> {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
-  bool _isPlaying = false;
-  bool _isMuted = false;
-  bool _showIcon = true;
+  bool _isError = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() {
-            _isInitialized = true;
-            _controller.setLooping(true); // লুপ
-          });
-        }
-      });
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      // 🚀 URL e kono space ba vul thakle seta auto-fix korbe Uri.encodeFull
+      String safeUrl = Uri.encodeFull(widget.videoUrl.trim());
+
+      // ignore: deprecated_member_use
+      _controller = VideoPlayerController.network(safeUrl);
+
+      await _controller.initialize();
+      _controller.setLooping(true); // Video shesh hole abar shuru hobe
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint("🎥 Video Init Error: $e");
+      if (mounted) {
+        setState(() {
+          _isError = true;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    // 🚀 Scroll kore chole gele video pause & dispose hoye jabe (Memory save korbe)
     _controller.dispose();
     super.dispose();
   }
-  void _togglePlay() {
-    if (!_isInitialized) return;
 
+  void _togglePlayPause() {
     setState(() {
       if (_controller.value.isPlaying) {
         _controller.pause();
-        _isPlaying = false;
-        _showIcon = true; // pause হলে play icon দেখাও
       } else {
         _controller.play();
-        _isPlaying = true;
-        _showIcon = false; // play হলে icon hide
-
-        // play হলে 1.5 সেকেন্ড পরে icon hide হবে
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted && _controller.value.isPlaying) {
-            setState(() {
-              _showIcon = false;
-            });
-          }
-        });
       }
     });
   }
 
-  void _toggleMute() {
-    setState(() {
-      _isMuted = !_isMuted;
-      _controller.setVolume(_isMuted ? 0.0 : 1.0);
-    });
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    // ❌ Jodi video link e kono problem thake (Error State)
+    if (_isError) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        color: Colors.black87,
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.broken_image_outlined, color: Colors.white54, size: 40),
+              SizedBox(height: 8),
+              Text("Video not available", style: TextStyle(color: Colors.white54, fontSize: 13)),
+            ],
+          ),
+        ),
+      );
+    }
 
+    // ⏳ Video Initial Load (Shimmer/Loading State)
+    if (!_isInitialized) {
+      return Container(
+        height: 250,
+        width: double.infinity,
+        color: Colors.grey[200], // Facebook er moton halka grey loading
+        child: const Center(
+          child: SizedBox(
+            height: 30, width: 30,
+            child: CircularProgressIndicator(color: Colors.blue, strokeWidth: 2.5),
+          ),
+        ),
+      );
+    }
+
+    // ✅ Video Play State
     return Container(
-      color: Colors.black,
-      child: _isInitialized
-          ? GestureDetector(
-        onTap: _togglePlay,
+      color: Colors.black, // Video background kalo
+      child: AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
-                ),
-              ),
+            GestureDetector(
+              onTap: _togglePlayPause,
+              child: VideoPlayer(_controller),
             ),
-            if (_showIcon)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
-                  shape: BoxShape.circle,
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Icon(
-                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 50,
-                ),
-              ),
-            Positioned(
-              bottom: 12,
-              right: 12,
-              child: GestureDetector(
-                onTap: _toggleMute,
+
+            // Play Button Overlay (Jodi pause thake tokhon dekhabe)
+            if (!_controller.value.isPlaying)
+              GestureDetector(
+                onTap: _togglePlayPause,
                 child: Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withOpacity(0.5),
                     shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white70, width: 2),
                   ),
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    _isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 40),
                 ),
               ),
-            ),
           ],
-        ),
-      )
-          : const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: Colors.white54,
         ),
       ),
     );

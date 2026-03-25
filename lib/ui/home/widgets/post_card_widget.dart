@@ -5,6 +5,7 @@ import 'package:flutter/services.dart'; // Clipboard
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shimmer/shimmer.dart'; // Shimmer import kora holo
 
 import '../../view_profile/screens/view_profile_screens.dart';
 import '../../view_post/screens/post_details.dart';
@@ -224,7 +225,13 @@ class PostCardWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                           child: CachedNetworkImage(
                             imageUrl: profileImageUrl, width: 40, height: 40, fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: Colors.grey[300], child: const Icon(Icons.person, color: Colors.white)),
+                            memCacheWidth: 150, // 🚀 Profile picture memory fix
+                            memCacheHeight: 150,
+                            placeholder: (context, url) => Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Container(color: Colors.white, width: 40, height: 40),
+                            ),
                             errorWidget: (context, url, error) => Container(color: Colors.grey[300], child: const Icon(Icons.broken_image, color: Colors.grey)),
                           ),
                         ),
@@ -266,7 +273,17 @@ class PostCardWidget extends StatelessWidget {
                       tag: "post_image_${post.post_id}_$index",
                       child: CachedNetworkImage(
                         imageUrl: post.image_url!, fit: BoxFit.contain,
-                        placeholder: (context, url) => Container(height: 300, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                        memCacheWidth: 800, // 🚀 Main Image Memory Fix (Smooth Scrolling)
+                        maxWidthDiskCache: 1000,
+                        placeholder: (context, url) => SizedBox(
+                          height: 300,
+                          width: double.infinity,
+                          child: Shimmer.fromColors(
+                            baseColor: Colors.grey[800]!,
+                            highlightColor: Colors.grey[600]!,
+                            child: Container(color: Colors.white),
+                          ),
+                        ),
                         errorWidget: (context, url, error) => const SizedBox(height: 300, child: Icon(Icons.broken_image, color: Colors.grey, size: 50)),
                       ),
                     ),
