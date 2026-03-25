@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../screens/reel_screens.dart';
-// import '../../screens/reel_screens.dart'; // ⚠️ Ensure this path is correct, otherwise use the Model below.
+// ✅ আপনার API Model & Controller ইম্পোর্ট করুন
+import 'package:meetyarah/ui/home/models/get_post_model.dart';
+import 'package:meetyarah/ui/home/controllers/get_post_controllers.dart';
 
 // -----------------------------------------------------------------------------
 // 🎨 APP THEME & CONSTANTS
@@ -36,7 +37,7 @@ class AppStyles {
 // 📱 MAIN SCREEN
 // -----------------------------------------------------------------------------
 class ProfileViewScreen extends StatefulWidget {
-  final VideoDataModel userData;
+  final GetPostModel userData; // 🔹 VideoDataModel এর বদলে GetPostModel
   const ProfileViewScreen({super.key, required this.userData});
 
   @override
@@ -44,15 +45,24 @@ class ProfileViewScreen extends StatefulWidget {
 }
 
 class _ProfileViewScreenState extends State<ProfileViewScreen> {
-  // ✅ FIX: Using lazyPut or ensuring controller stays alive.
-  // For stateful widget, simple put is fine, but we handle dispose to be clean.
   final ProfileController controller = Get.put(ProfileController());
+
+  // 🔹 ইউজারের পোস্টগুলো বের করার জন্য GetPostController নিয়ে আসছি
+  final GetPostController _postController = Get.find<GetPostController>();
+
   bool _isLoading = true;
+  List<GetPostModel> _userPosts = [];
 
   @override
   void initState() {
     super.initState();
-    // Simulate API Delay
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    // 🔹 নির্দিষ্ট ইউজারের পোস্টগুলো ফিল্টার করা হচ্ছে
+    _userPosts = _postController.posts.where((post) => post.user_id == widget.userData.user_id).toList();
+
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _isLoading = false);
     });
@@ -60,14 +70,21 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 
   @override
   void dispose() {
-    // ✅ OPTIONAL: Delete controller when leaving screen to free memory
-    // Get.delete<ProfileController>();
+    // Get.delete<ProfileController>(); // প্রয়োজন হলে আনকমেন্ট করবেন
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final user = widget.userData;
+
+    // 🔹 পোস্ট থেকে ইমেজ বা ভিডিও থাম্বনেইল ইউআরএল আলাদা করা হচ্ছে
+    List<String> contentUrls = _userPosts
+        .map((p) => p.image_url ?? p.directUrl ?? "")
+        .where((url) => url.isNotEmpty)
+        .toList();
+
+    String contactPrice = "\$50"; // API তে প্রাইস না থাকায় ডিফল্ট প্রাইস দিলাম
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -85,11 +102,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     children: [
                       _ProfileHeader(user: user, controller: controller),
                       const SizedBox(height: 20),
-                      _StatsRow(user: user),
+                      _StatsRow(userPosts: _userPosts), // 🔹 রিয়েল ডেটা পাঠানো হলো
                       const SizedBox(height: 25),
                       Obx(() => _SubscriptionCard(
                           isVip: controller.isVip.value,
-                          price: user.contactPrice,
+                          price: contactPrice,
                           onTap: controller.unlockContent
                       )),
                       const SizedBox(height: 20),
@@ -103,18 +120,18 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
           body: TabBarView(
             children: [
               _ContentGrid(
-                images: user.freeContentImages,
+                images: contentUrls, // 🔹 রিয়েল ইউজারের পোস্ট
                 isLoading: _isLoading,
                 isPremium: false,
-                price: user.contactPrice,
-                controller: controller, // ✅ FIX: Passing controller directly
+                price: contactPrice,
+                controller: controller,
               ),
               _ContentGrid(
-                images: user.premiumContentImages,
+                images: contentUrls.isNotEmpty ? [contentUrls.first] : [], // ডেমো হিসেবে প্রথম পোস্টটি প্রিমিয়ামে দেখালাম
                 isLoading: _isLoading,
                 isPremium: true,
-                price: user.contactPrice,
-                controller: controller, // ✅ FIX: Passing controller directly
+                price: contactPrice,
+                controller: controller,
               ),
             ],
           ),
@@ -169,13 +186,16 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 // -----------------------------------------------------------------------------
 
 class _ProfileHeader extends StatelessWidget {
-  final VideoDataModel user;
+  final GetPostModel user; // 🔹 API Model
   final ProfileController controller;
 
   const _ProfileHeader({required this.user, required this.controller});
 
   @override
   Widget build(BuildContext context) {
+    String name = user.full_name ?? user.username ?? "Unknown User";
+    String handle = user.username?.replaceAll(' ', '').toLowerCase() ?? "user";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -190,12 +210,12 @@ class _ProfileHeader extends StatelessWidget {
               ),
               child: CircleAvatar(
                 radius: 40,
-                backgroundImage: NetworkImage(user.profileImage),
+                backgroundImage: NetworkImage(user.profile_picture_url ?? "https://via.placeholder.com/150"),
                 backgroundColor: Colors.grey[200],
               ),
             ),
             const Spacer(),
-            _CircleBtn(icon: Icons.mail_outline, onTap: () => controller.tryPaidContact(user.contactPrice, user.channelName)),
+            _CircleBtn(icon: Icons.mail_outline, onTap: () => controller.tryPaidContact("\$50", name)),
             const SizedBox(width: 10),
             _CircleBtn(icon: Icons.share_outlined, onTap: () => Get.snackbar("Share", "Sharing...")),
             const SizedBox(width: 10),
@@ -205,42 +225,36 @@ class _ProfileHeader extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        // Name & Verification
-        Row(
-          children: [
-            Flexible(
-              child: Text(user.channelName, style: AppStyles.header, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            if (user.isVerified) ...[
-              const SizedBox(width: 6),
-              const Icon(Icons.verified, color: AppColors.brand, size: 24),
-            ],
-          ],
-        ),
+        // Name
+        Text(name, style: AppStyles.header, maxLines: 1, overflow: TextOverflow.ellipsis),
 
         // Handle
-        Text("@${user.channelName.replaceAll(' ', '').toLowerCase()}", style: AppStyles.subHeader),
+        Text("@$handle", style: AppStyles.subHeader),
         const SizedBox(height: 15),
 
-        // Bio
-        Text(user.bio, style: AppStyles.body),
+        // Bio (API তে Bio না থাকলে ডিফল্ট টেক্সট)
+        const Text("Welcome to my profile! Checkout my latest posts and videos.", style: AppStyles.body),
         const SizedBox(height: 20),
 
         // Services
-        const Text("ABOUT ME & SERVICES", style: AppStyles.sectionTitle),
+        const Text("ABOUT ME", style: AppStyles.sectionTitle),
         const SizedBox(height: 8),
-        Text(user.serviceOverview, style: AppStyles.body.copyWith(color: Colors.grey[700])),
+        Text("Digital Creator & Content Maker.", style: AppStyles.body.copyWith(color: Colors.grey[700])),
       ],
     );
   }
 }
 
 class _StatsRow extends StatelessWidget {
-  final VideoDataModel user;
-  const _StatsRow({required this.user});
+  final List<GetPostModel> userPosts; // 🔹 ইউজারের পোস্ট থেকে স্ট্যাটাস হিসেব করার জন্য
+  const _StatsRow({required this.userPosts});
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 ইউজারের মোট লাইক এবং পোস্ট সংখ্যা হিসেব করা
+    int totalLikes = userPosts.fold(0, (sum, post) => sum + post.like_count);
+    int totalPosts = userPosts.length;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 15),
       decoration: BoxDecoration(
@@ -250,11 +264,11 @@ class _StatsRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildItem(user.likes, "LIKES"),
+          _buildItem(totalLikes.toString(), "LIKES"),
           Container(height: 20, width: 1, color: Colors.grey.shade300),
-          _buildItem(user.subscribers, "FANS"),
+          _buildItem(totalPosts.toString(), "POSTS"),
           Container(height: 20, width: 1, color: Colors.grey.shade300),
-          _buildItem(user.premiumSubscribers, "PREMIUM"),
+          _buildItem("0", "PREMIUM"), // 🔹 ডামি ডেটা
         ],
       ),
     );
@@ -346,7 +360,7 @@ class _ContentGrid extends StatelessWidget {
     if (isLoading) {
       return GridView.builder(
         padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(), // Loading shouldn't scroll
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: 6,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.8),
         itemBuilder: (_, __) => Shimmer.fromColors(
@@ -362,31 +376,39 @@ class _ContentGrid extends StatelessWidget {
 
     return GridView.builder(
       padding: EdgeInsets.zero,
-      // ✅ FIX: Bouncing Physics ensures smooth scrolling inside NestedScrollView
       physics: const BouncingScrollPhysics(),
       itemCount: images.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 2, mainAxisSpacing: 2, childAspectRatio: 0.75),
       itemBuilder: (context, index) {
         return Obx(() {
           bool isLocked = isPremium && !controller.isVip.value;
-          return Material( // ✅ FIX: Added Material for Ripple Effect
+          return Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
                 if (isLocked) {
                   Get.snackbar("LOCKED 🔒", "Subscribe for $price to see this.", backgroundColor: Colors.black, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(20));
                 } else {
+                  // 🔹 ভিডিও বা ইমেজের প্রিভিউ অপেন করার জন্য
                   Get.to(() => Scaffold(
                     backgroundColor: Colors.black,
                     appBar: AppBar(backgroundColor: Colors.transparent, iconTheme: const IconThemeData(color: Colors.white)),
-                    body: Center(child: Image.network(images[index])),
+                    // যদি ভিডিও লিংক হয় তাহলে ইমেজ উইজেট দিয়ে লোড হবে না, সেক্ষেত্রে আপনার ভিডিও প্লেয়ার কল করতে হবে
+                    body: Center(child: images[index].endsWith('.mp4')
+                        ? const Icon(Icons.play_circle_fill, color: Colors.white, size: 60)
+                        : Image.network(images[index])
+                    ),
                   ));
                 }
               },
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(images[index], fit: BoxFit.cover, errorBuilder: (_,__,___)=> Container(color: Colors.grey[200])),
+                  // 🔹 ভিডিও থাম্বনেইল বা ইমেজ
+                  images[index].endsWith('.mp4')
+                      ? Container(color: Colors.black87, child: const Icon(Icons.play_arrow, color: Colors.white54, size: 40))
+                      : Image.network(images[index], fit: BoxFit.cover, errorBuilder: (_,__,___)=> Container(color: Colors.grey[200])),
+
                   if (isLocked) Container(color: Colors.black.withOpacity(0.5), child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white, size: 28))),
                 ],
               ),
