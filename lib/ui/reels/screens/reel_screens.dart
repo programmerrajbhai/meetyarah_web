@@ -1,30 +1,38 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // kIsWeb
+import 'dart:math'; // 🔹 Random() ব্যবহারের জন্য
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Clipboard
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// ✅ API Model & Controller
 import 'package:meetyarah/ui/home/models/get_post_model.dart';
 import 'package:meetyarah/ui/home/controllers/get_post_controllers.dart';
 
-// ==========================================
-// 1. REEL SCREENS (TIKTOK STYLE)
-// ==========================================
 class ReelScreens extends StatefulWidget {
-  const ReelScreens({super.key});
+  final bool isTabActive; // 🔹 নতুন প্যারামিটার: ট্যাবটি বর্তমানে ওপেন আছে কিনা তা চেক করার জন্য
+
+  const ReelScreens({super.key, this.isTabActive = true});
+
   @override
   State<ReelScreens> createState() => _ReelScreensState();
 }
 
 class _ReelScreensState extends State<ReelScreens> {
-  final GetPostController _postController = Get.put(GetPostController());
+  late final GetPostController _postController;
   final PageController _pageController = PageController();
   int _currentIndex = 0;
+
+  List<GetPostModel> _shuffledReels = []; // র‍্যান্ডম রিলস রাখার লিস্ট
+  bool _isShuffled = false; // বারবার যেন শাফেল না হয় তার ফ্ল্যাগ
+
+  @override
+  void initState() {
+    super.initState();
+    _postController = Get.isRegistered<GetPostController>() ? Get.find<GetPostController>() : Get.put(GetPostController());
+  }
 
   @override
   void dispose() {
@@ -35,12 +43,10 @@ class _ReelScreensState extends State<ReelScreens> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // TikTok style background
+      backgroundColor: Colors.black,
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWideScreen = constraints.maxWidth > 900;
-
-          // ওয়েবের জন্য সেন্টার ফিডের সাইজ একটু ছোট রাখবো যেন ফোনের মতো লাগে
           double feedWidth = isWideScreen ? 450 : constraints.maxWidth;
 
           return Center(
@@ -48,72 +54,68 @@ class _ReelScreensState extends State<ReelScreens> {
               width: isWideScreen ? 1000 : constraints.maxWidth,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- CENTER FEED (TIKTOK PAGE VIEW) ---
                   SizedBox(
                     width: feedWidth,
-                    height: constraints.maxHeight, // Full Height
+                    height: constraints.maxHeight,
                     child: Obx(() {
                       if (_postController.isLoading.value && _postController.posts.isEmpty) {
                         return const Center(child: CircularProgressIndicator(color: Colors.white));
                       }
 
-                      if (_postController.hasError.value && _postController.posts.isEmpty) {
-                        return Center(
-                          child: Text(
-                            _postController.errorMessage.value,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        );
-                      }
-
-                      // 🔹 শুধুমাত্র ভিডিও পোস্ট ফিল্টার করা
-                      List<GetPostModel> videoPosts = _postController.posts.where((post) {
+                      // 🔹 শুধুমাত্র ভিডিও ফিল্টার করা
+                      List<GetPostModel> currentVideos = _postController.posts.where((post) {
                         String url = post.directUrl ?? post.image_url ?? "";
                         return url.toLowerCase().endsWith('.mp4') || post.isDirectLink == true;
                       }).toList();
 
-                      if (videoPosts.isEmpty) {
+                      if (currentVideos.isEmpty) {
+                        _isShuffled = false;
                         return const Center(child: Text("No reels found.", style: TextStyle(color: Colors.white)));
                       }
 
+                      // 🔹 ভিডিওগুলো র‍্যান্ডমলি সাজানো (শুধু একবার শাফেল হবে)
+                      if (!_isShuffled && currentVideos.isNotEmpty) {
+                        currentVideos.shuffle(Random());
+                        _shuffledReels = currentVideos;
+                        _isShuffled = true;
+                      }
+
                       return RefreshIndicator(
-                        onRefresh: _postController.refreshPosts,
+                        onRefresh: () async {
+                          await _postController.refreshPosts();
+                          setState(() => _isShuffled = false); // রিফ্রেশ করলে আবার নতুন করে শাফেল হবে
+                        },
                         color: Colors.white,
                         backgroundColor: Colors.black,
                         child: Stack(
                           children: [
                             PageView.builder(
                               controller: _pageController,
-                              scrollDirection: Axis.vertical, // 🔹 Vertical Swipe (TikTok style)
-                              itemCount: videoPosts.length + (_postController.isMoreDataLoading.value ? 1 : 0),
+                              scrollDirection: Axis.vertical,
+                              itemCount: _shuffledReels.length + (_postController.isMoreDataLoading.value ? 1 : 0),
                               onPageChanged: (index) {
-                                setState(() {
-                                  _currentIndex = index;
-                                });
-                                // 🔹 একদম শেষে চলে আসলে নতুন ডেটা লোড করবে
-                                if (index == videoPosts.length - 1 && _postController.hasMoreData) {
+                                setState(() => _currentIndex = index);
+                                if (index == _shuffledReels.length - 1 && _postController.hasMoreData) {
                                   _postController.loadMorePosts();
                                 }
                               },
                               itemBuilder: (context, index) {
-                                if (index == videoPosts.length) {
+                                if (index == _shuffledReels.length) {
                                   return const Center(child: CircularProgressIndicator(color: Colors.white));
                                 }
                                 return TikTokVideoCard(
-                                  key: ValueKey(videoPosts[index].post_id),
-                                  postData: videoPosts[index],
-                                  isVisible: _currentIndex == index, // 🔹 শুধু দৃশ্যমান ভিডিওটি প্লে হবে
+                                  key: ValueKey(_shuffledReels[index].post_id),
+                                  postData: _shuffledReels[index],
+                                  // 🔹 ট্যাব অ্যাক্টিভ থাকলে এবং বর্তমান পেজ হলেই ভিডিও প্লে হবে
+                                  isVisible: widget.isTabActive && _currentIndex == index,
                                 );
                               },
                             ),
 
-                            // --- Top Gradient & App Bar Overlay ---
+                            // --- Top App Bar Overlay ---
                             Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
+                              top: 0, left: 0, right: 0,
                               child: Container(
                                 height: 100,
                                 decoration: const BoxDecoration(
@@ -127,19 +129,9 @@ class _ReelScreensState extends State<ReelScreens> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const SizedBox(width: 48), // Balancing space
-                                      Text(
-                                        "Reels",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-                                        onPressed: () {}, // ক্যামেরা বা ক্রিয়েট অপশন
-                                      )
+                                      const SizedBox(width: 48),
+                                      Text("Reels", style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                                      IconButton(icon: const Icon(Icons.camera_alt_outlined, color: Colors.white), onPressed: () {})
                                     ],
                                   ),
                                 ),
@@ -158,27 +150,7 @@ class _ReelScreensState extends State<ReelScreens> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(top: 20),
                       color: Colors.white,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Suggested Creators",
-                                style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                    color: Colors.grey[700])),
-                            const SizedBox(height: 24),
-                            const Divider(),
-                            // ডামি সাজেশন লিস্ট
-                            ...List.generate(3, (index) => ListTile(
-                              leading: CircleAvatar(backgroundImage: NetworkImage("https://i.pravatar.cc/150?img=${index + 20}")),
-                              title: Text("Creator ${index + 1}", style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                              subtitle: const Text("Verified Creator"),
-                              trailing: TextButton(onPressed: () {}, child: const Text("Follow")),
-                            ))
-                          ],
-                        ),
-                      ),
+                      child: const Center(child: Text("Suggestions Here")),
                     ),
                 ],
               ),
@@ -191,7 +163,7 @@ class _ReelScreensState extends State<ReelScreens> {
 }
 
 // ==========================================
-// 2. TIKTOK STYLE VIDEO CARD (Overlay UI)
+// 🔹 TIKTOK STYLE VIDEO CARD
 // ==========================================
 class TikTokVideoCard extends StatefulWidget {
   final GetPostModel postData;
@@ -212,7 +184,8 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
   bool _isInitialized = false;
   bool _isBroken = false;
   bool _isLiked = false;
-  bool _isPlaying = true;
+  bool _isPlaying = false;
+  bool _showPauseIcon = false;
 
   late AnimationController _heartAnimationController;
   late Animation<double> _heartScale;
@@ -226,18 +199,17 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
     _setupAnimation();
   }
 
-  // 🔹 PageView-এ স্ক্রল করার সময় ভিডিও প্লে/পজ করার লজিক
+  // 🔹 ট্যাব পরিবর্তন বা সোয়াইপ করার সময় প্লে/পজ লজিক
   @override
   void didUpdateWidget(covariant TikTokVideoCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_controller != null && _isInitialized) {
       if (widget.isVisible && !oldWidget.isVisible) {
         _controller?.play();
-        _isPlaying = true;
+        setState(() => _isPlaying = true);
       } else if (!widget.isVisible && oldWidget.isVisible) {
         _controller?.pause();
-        _controller?.seekTo(Duration.zero); // অপশনাল: ভিডিও শুরুতে নিয়ে আসা
-        _isPlaying = false;
+        setState(() => _isPlaying = false);
       }
     }
   }
@@ -266,10 +238,10 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
             _isBroken = false;
           });
           _controller?.setLooping(true);
-          // যদি প্রথমে স্ক্রিনে থাকে তবেই প্লে হবে
+          // শুধুমাত্র যদি ট্যাবটি অ্যাক্টিভ থাকে তবেই ভিডিও প্লে শুরু হবে
           if (widget.isVisible) {
             _controller?.play();
-            _isPlaying = true;
+            setState(() => _isPlaying = true);
           }
         }
       }).catchError((e) {
@@ -287,11 +259,19 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
         if (_controller!.value.isPlaying) {
           _controller?.pause();
           _isPlaying = false;
+          _showPauseIcon = true;
         } else {
           _controller?.play();
           _isPlaying = true;
+          _showPauseIcon = false;
         }
       });
+
+      if (!_isPlaying) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) setState(() => _showPauseIcon = false);
+        });
+      }
     }
   }
 
@@ -300,13 +280,13 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
       _showHeart = true;
       _isLiked = true;
     });
-    // API Call for Like here
     _heartAnimationController.forward();
     HapticFeedback.mediumImpact();
   }
 
   @override
   void dispose() {
+    _controller?.pause(); // ডিসপোজ করার আগে নিশ্চিত পজ করে দেওয়া
     _controller?.dispose();
     _heartAnimationController.dispose();
     super.dispose();
@@ -315,23 +295,19 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     if (_isBroken) {
-      return Container(
-        color: Colors.black,
-        child: const Center(child: Text("Video Unavailable", style: TextStyle(color: Colors.white54))),
-      );
+      return Container(color: Colors.black, child: const Center(child: Text("Video Unavailable", style: TextStyle(color: Colors.white54))));
     }
 
-    return GestureDetector(
-      onTap: _togglePlayPause,
-      onDoubleTap: _onDoubleTapLike,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // --- 1. VIDEO PLAYER ---
-          _isInitialized
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        GestureDetector(
+          onTap: _togglePlayPause,
+          onDoubleTap: _onDoubleTapLike,
+          child: _isInitialized
               ? SizedBox.expand(
             child: FittedBox(
-              fit: BoxFit.cover, // TikTok-এর মতো পুরো স্ক্রিন জুড়ে থাকবে
+              fit: BoxFit.cover,
               child: SizedBox(
                 width: _controller!.value.size.width,
                 height: _controller!.value.size.height,
@@ -340,139 +316,78 @@ class _TikTokVideoCardState extends State<TikTokVideoCard> with TickerProviderSt
             ),
           )
               : const Center(child: CircularProgressIndicator(color: Colors.white30)),
+        ),
 
-          // --- Play/Pause Indicator Overlay ---
-          if (!_isPlaying && _isInitialized)
-            Container(
-              color: Colors.black26,
-              child: const Center(
-                child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 80),
+        if (!_isPlaying && _isInitialized)
+          IgnorePointer(
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(15),
+                decoration: const BoxDecoration(color: Colors.black38, shape: BoxShape.circle),
+                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 60),
               ),
             ),
+          ),
 
-          // --- Double Tap Heart Animation ---
-          if (_showHeart)
-            Center(
+        if (_showHeart)
+          IgnorePointer(
+            child: Center(
               child: ScaleTransition(
                 scale: _heartScale,
-                child: const Icon(Icons.favorite, color: Colors.redAccent, size: 120, shadows: [Shadow(color: Colors.black45, blurRadius: 15)]),
+                child: const Icon(Icons.favorite, color: Colors.redAccent, size: 120),
               ),
             ),
+          ),
 
-          // --- Bottom Gradient (For readable text) ---
+        if (_isInitialized)
           Positioned(
             bottom: 0, left: 0, right: 0,
-            child: Container(
-              height: 250,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black87, Colors.transparent],
-                ),
+            child: VideoProgressIndicator(
+              _controller!,
+              allowScrubbing: true,
+              colors: const VideoProgressColors(playedColor: Colors.white, bufferedColor: Colors.white24, backgroundColor: Colors.transparent),
+              padding: const EdgeInsets.symmetric(vertical: 2),
+            ),
+          ),
+
+        Positioned(
+          bottom: 20, left: 15, right: 80,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("@${widget.postData.username ?? "user"}", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              if (widget.postData.post_content != null)
+                Text(widget.postData.post_content!, style: GoogleFonts.inter(color: Colors.white, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+
+        Positioned(
+          bottom: 40, right: 10,
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: CachedNetworkImageProvider(widget.postData.profile_picture_url ?? "https://via.placeholder.com/150"),
               ),
-            ),
+              const SizedBox(height: 25),
+              _ActionIcon(icon: Icons.favorite, color: _isLiked ? Colors.redAccent : Colors.white, label: "${widget.postData.like_count}", onTap: () {
+                setState(() => _isLiked = !_isLiked);
+                HapticFeedback.lightImpact();
+              }),
+              const SizedBox(height: 20),
+              _ActionIcon(icon: Icons.chat_bubble_rounded, color: Colors.white, label: "${widget.postData.comment_count}", onTap: () {}),
+              const SizedBox(height: 20),
+              _ActionIcon(icon: Icons.reply_rounded, color: Colors.white, label: "Share", onTap: () {}),
+            ],
           ),
-
-          // --- 2. BOTTOM LEFT (INFO) ---
-          Positioned(
-            bottom: 20,
-            left: 15,
-            right: 80, // ডানদিকের আইকনগুলোর জন্য জায়গা রাখা
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "@${widget.postData.username ?? "user"}",
-                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                if (widget.postData.post_content != null && widget.postData.post_content!.isNotEmpty)
-                  Text(
-                    widget.postData.post_content!,
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.music_note, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text("Original Audio - ${widget.postData.username ?? "user"}", style: const TextStyle(color: Colors.white, fontSize: 13)),
-                  ],
-                )
-              ],
-            ),
-          ),
-
-          // --- 3. BOTTOM RIGHT (ACTIONS) ---
-          Positioned(
-            bottom: 20,
-            right: 10,
-            child: Column(
-              children: [
-                // Profile Picture
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage(widget.postData.profile_picture_url ?? "https://via.placeholder.com/150"),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Like
-                _ActionIcon(
-                  icon: Icons.favorite,
-                  color: _isLiked ? Colors.redAccent : Colors.white,
-                  label: "${widget.postData.like_count}",
-                  onTap: () {
-                    setState(() => _isLiked = !_isLiked);
-                    HapticFeedback.lightImpact();
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Comment
-                _ActionIcon(
-                  icon: Icons.chat_bubble_rounded,
-                  color: Colors.white,
-                  label: "${widget.postData.comment_count}",
-                  onTap: () {
-                    // Show Comment Bottom Sheet
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Share
-                _ActionIcon(
-                  icon: Icons.reply_rounded, // TikTok style share icon
-                  color: Colors.white,
-                  label: "Share",
-                  onTap: () {
-                    Share.share("Check out this reel: https://meetyarah.com/?post_id=${widget.postData.post_id}");
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Music Disc Animation (Static for now)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.grey[800], shape: BoxShape.circle),
-                  child: const Icon(Icons.music_note, color: Colors.white, size: 20),
-                )
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-// ✅ Action Icon Widget
 class _ActionIcon extends StatelessWidget {
   final IconData icon;
   final String label;

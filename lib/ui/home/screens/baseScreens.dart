@@ -23,9 +23,11 @@ class Basescreens extends StatefulWidget {
 class _BasescreensState extends State<Basescreens> {
   int _selectedIndex = 0;
 
+  // 🔹 _pages কে getter হিসেবে রাখা হয়েছে যাতে _selectedIndex পরিবর্তন হলে এটি আপডেট হয়
   List<Widget> get _pages => [
     const FeedScreen(),
-    const ReelScreens(),
+    // 🔹 রিলস স্ক্রিনে বর্তমান ইনডেক্স ১ কিনা তা চেক করে পাঠানো হচ্ছে
+    ReelScreens(isTabActive: _selectedIndex == 1),
     const SizedBox(),
     const ProfilePage(),
     MenuScreen(),
@@ -79,7 +81,7 @@ class _BasescreensState extends State<Basescreens> {
           }),
           const SizedBox(width: 10),
 
-          // ✅ ২. নোটিফিকেশন বাটন আপডেট করা হলো
+          // ✅ নোটিফিকেশন বাটন আপডেট করা হলো
           _buildActionButton(Icons.notifications, () {
             // নোটিফিকেশন স্ক্রিন ওপেন হবে
             Get.to(() => const NotificationScreen(), transition: Transition.cupertino);
@@ -125,8 +127,6 @@ class _BasescreensState extends State<Basescreens> {
       ),
     );
   }
-
-  // ... বাকি অংশ (Web Layout, Button Helper, Nav Items) আগের মতোই থাকবে ...
 
   Widget _buildWebLayout() {
     return Row(
@@ -183,7 +183,19 @@ class _BasescreensState extends State<Basescreens> {
           child: IconButton(icon: Icon(icon, color: Colors.black87, size: 22), onPressed: onTap, splashRadius: 20),
         ),
         if (isNotification)
-          Positioned(right: 6, top: 10, child: Container(height: 9, width: 9, decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.5)))),
+          Positioned(
+              right: 6,
+              top: 10,
+              child: Container(
+                  height: 9,
+                  width: 9,
+                  decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5)
+                  )
+              )
+          ),
       ],
     );
   }

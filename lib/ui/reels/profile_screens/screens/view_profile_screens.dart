@@ -119,6 +119,8 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
           },
           body: TabBarView(
             children: [
+
+
               _ContentGrid(
                 images: contentUrls, // 🔹 রিয়েল ইউজারের পোস্ট
                 isLoading: _isLoading,
@@ -126,6 +128,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 price: contactPrice,
                 controller: controller,
               ),
+
               _ContentGrid(
                 images: contentUrls.isNotEmpty ? [contentUrls.first] : [], // ডেমো হিসেবে প্রথম পোস্টটি প্রিমিয়ামে দেখালাম
                 isLoading: _isLoading,
@@ -133,6 +136,8 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 price: contactPrice,
                 controller: controller,
               ),
+
+
             ],
           ),
         ),
